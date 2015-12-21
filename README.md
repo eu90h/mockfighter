@@ -11,8 +11,11 @@ Both are extremely stupid, as anything better would probably give away solutions
 Quickstart
 ==========
 The following snippet shows how to run the mockfighter server on http://localhost:8000/
- (require mockfighter)
- (define-values (server-thread begin-trading) (run-mockfighter))]
+
+`` (require mockfighter) ``
+
+`` (define-values (server-thread begin-trading) (run-mockfighter)) ``
+
 This will begin running the server in a separate thread, which is returned
 along with a thunk begin-trading which, when called, starts the bots trading loop.
 
