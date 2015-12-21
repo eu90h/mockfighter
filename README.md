@@ -1,12 +1,17 @@
 Introduction
 =============
 Mockfighter is a web API front-end to a limit order book, based on [Stockfighter](stockfighter.io).
+It requires [Racket](racket-lang.org) to run.
 
 The goal is to be 1-1 compatible with the stockfighter API.
 
 Currently, two bots are provided: a noisy trader and a market maker (that doesn't understand its job).
 Both are extremely stupid, as anything better would probably give away solutions to Stockfighter levels.
 
+Installation
+============
+`raco pkg install https://github.com/eu90h/mockfighter/`
+or install from DrRacket.
 
 Quickstart
 ==========
