@@ -1,7 +1,7 @@
 Introduction
 =============
-Mockfighter is a web API front-end to a limit order book, based on [Stockfighter](stockfighter.io).
-It requires [Racket](racket-lang.org) to run.
+Mockfighter is a web API front-end to a limit order book, based on [Stockfighter](https://stockfighter.io).
+It requires [Racket](https://racket-lang.org) to run.
 
 The goal is to be 1-1 compatible with the stockfighter API.
 
