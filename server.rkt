@@ -27,11 +27,15 @@
                  [else (respond/error "unknown request")])]
         [else (respond/error "unknown request")]))
 
-(define (handle-game-master-request req api-key [method 'GET])
-  (if (equal? 'GET method)
-      (cond [(and (= 2 (length req)) (equal? "instances" (car req)) (equal? "new" (cadr req))) (respond (send gm new-instance api-key))]
-            [else (respond/error "unknown request")])
-      (respond/error "unknown request")))
+(define (handle-game-master-request req api-key [method 'GET]  #:post-data [data null])
+  (cond [(equal? 'GET method) (cond
+                                
+                              ;  [(and (= 2 (length req)) (equal? "instances" (car req)) (equal? "new" (cadr req))) ]
+                                [else (respond/error "unknown request")])]
+        [(equal? 'POST method) (cond
+                                 [(and (= 2 (length req)) (equal? "levels" (car req))) (respond (send gm new-instance api-key))]
+                                 [else (respond/error "unknown request")])]
+        [else (respond/error "unknown request")]))
 
 (define (handle-get req api-key)
   (cond [(equal? null req) (display-documentation)]
@@ -40,10 +44,7 @@
                                           (equal? (cadr req) "api"))
                                      (handle-orderbook-request (cddr req) api-key)
                                      (respond/error "unknown request"))]
-        [(equal? "gm" (car req)) (if (and (not (equal? (cdr req) null))
-                                          (equal? (second req) "api"))
-                                     (handle-game-master-request (cddr req) api-key)
-                                     (respond/error "unknown request"))]
+        [(equal? "gm" (car req)) (handle-game-master-request (cdr req) api-key)]
         [else (respond/error "unknown request")]))
 
 (define (handle-post req data api-key)
@@ -52,18 +53,19 @@
                                           (equal? (cadr req) "api"))
                                      (handle-orderbook-request (cddr req) api-key 'POST #:post-data (request-post-data/raw data))
                                      (respond/error "unknown request"))]
-        [(equal? "gm" (car req)) (if (and (not (equal? (cdr req) null))
-                                          (equal? (cadr req) "api"))
-                                     (handle-game-master-request (cddr req) api-key 'POST  #:post-data (request-post-data/raw data))
-                                     (respond/error "unknown request"))]
+        [(equal? "gm" (car req)) (handle-game-master-request (cdr req) api-key 'POST  #:post-data (request-post-data/raw data))]
         [else (respond/error "unknown request")]))
 
 (define (mockfighter-api req)
   (define parts (map path/param-path (url-path (request-uri req))))
-  (define headers (filter (lambda (h) (equal? 'x-starfighter-authorization (car h))) (request-headers req)))
-  (cond [(equal? null headers) (respond/error "api key required")]
-        [(equal? #"GET" (request-method req)) (handle-get parts (car headers))]
-        [(equal? #"POST" (request-method req)) (handle-post parts req (car headers))]
+  (define auth-hdr (filter (lambda (h) (equal? 'x-starfighter-authorization (car h))) (request-headers req)))
+  (define auth-cookie (filter (lambda (h) (equal? 'cookie (car h))) (request-headers req)))
+  (define api-key (cond [(and (null? auth-hdr) (null? auth-cookie)) null]
+                        [(null? auth-cookie) (cdr (car auth-hdr))]
+                        [(null? auth-hdr) (second (string-split (cdr (car auth-cookie)) "="))]))
+  (cond [(equal? null api-key) (respond/error "api key required")]
+        [(equal? #"GET" (request-method req)) (handle-get parts api-key)]
+        [(equal? #"POST" (request-method req)) (handle-post parts req api-key)]
         [else (respond/error "unknown request")]))
   
 (define mockfighter-server%
@@ -85,7 +87,7 @@
      (define i (hash-ref (send gm get-instance-data) (first instances)))
      (define bots (send gm get-bots (first instances)))
      (for ([bot (in-list bots)])
-       (send bot set-api-key (cdr (first instances))))
+       (send bot set-api-key (first instances)))
      (let loop ([trading-day-alarm (alarm-evt (+ (current-milliseconds) 1000))])
        (if (equal? #f (sync/timeout 0 trading-day-alarm))
            (loop trading-day-alarm)
