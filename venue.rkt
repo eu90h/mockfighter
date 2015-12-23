@@ -32,7 +32,7 @@
       (define fmv (hash-ref fmvs stock #f))
       (if (equal? fmv #f)
           (error-json "stock fmv not found")
-          (let ([change (* (if (= 1 (random 2)) -1 1) (random-integer 20 500))])
+          (let ([change (* (if (= 1 (random 2)) -1 1) (random-integer 1 25))])
             (hash-set! fmvs stock (+ fmv change)))))
     
     (define/public (run-bots)
