@@ -82,7 +82,7 @@
     (define/public (get-quote stock)
       (define me (hash-ref stocks stock #f))
       (if (equal? me #f)
-          (error-json "symbol nor found on exchange")
+          (error-json "symbol not found on exchange")
           (let* ([ob (send me get-orderbook)])
             (define bb (let ([o (orderbook-get-best-bid ob)])
                          (if (false? o) (make-hash) o)))
