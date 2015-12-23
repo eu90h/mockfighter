@@ -24,7 +24,9 @@ The following snippet shows how to run the Mockfighter server on http://localhos
 This will begin running the server in a separate thread, which is returned
 along with a thunk begin-trading which, when called, starts the bots trading loop.
 
-Next, create an instance by making a GET request to http://localhost:8000/gm/api/instances/new
+Next, create an instance of a level by POSTing to http://localhost:8000/gm/levels/any-string-here
+
+This will create an instance of the level "any-string-here".
 
 Then you may call the begin-trading procedure to spur the traders into action.
 
