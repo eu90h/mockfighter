@@ -27,6 +27,6 @@
 (send sf get-orderbook venue stock)
 
 (define bot-thread (thread (thunk (run-bots))))
-(sleep 10) ; wait roughly 2 trading days
+(sleep 25) ; wait roughly 5 trading days
 (kill-thread server-thread)
 (kill-thread bot-thread)
