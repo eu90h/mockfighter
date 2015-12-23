@@ -2,14 +2,17 @@
 (require web-server/servlet
          web-server/servlet-env
          "utils.rkt"
+         "server.rkt"
          stockfighter-api)
+(define-values (server-thread run-bots) (run-mockfighter))
+(sleep 3)
+(define sf (new stockfighter% [key "1C2B3A4"]))
+(send sf set-ob-endpoint "127.0.0.1")
+(send sf set-gm-endpoint "127.0.0.1")
+(send sf set-port 8000)
+(send sf ssl-off)
 
-  (define sf (new stockfighter% [key "1C2B3A4"]))
-  (send sf set-endpoint "127.0.0.1")
-  (send sf set-port 8000)
-  (send sf set-ssl #f)
-
-(define game-data (send sf new-instance))
+(define game-data (send sf new-instance "test"))
 (define venue (hash-ref game-data 'venue))
 (define stock (hash-ref game-data `symbol))
 (define account (hash-ref game-data 'account))
