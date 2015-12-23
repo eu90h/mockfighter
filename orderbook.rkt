@@ -1,6 +1,6 @@
 ; An implementation of an order book
 #lang racket
-(require stockfighter-api data/heap "time.rkt")
+(require stockfighter-api data/heap)
 (provide (except-out (all-defined-out) order-time))
 (define (order-time o) (hash-ref o `ts #f))
 (define (order<=? o1 o2)

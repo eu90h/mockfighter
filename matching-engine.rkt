@@ -1,6 +1,6 @@
 #lang racket
 (provide matching-engine%)
-(require stockfighter-api "orderbook.rkt" "utils.rkt" "time.rkt" racket/generator data/heap)
+(require stockfighter-api "orderbook.rkt" "utils.rkt" racket/generator data/heap)
 
 (define generate-id
   (generator

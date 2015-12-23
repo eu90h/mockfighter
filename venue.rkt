@@ -1,5 +1,5 @@
 #lang racket
-(require "matching-engine.rkt" "orderbook.rkt" stockfighter-api "time.rkt" "utils.rkt"
+(require "matching-engine.rkt" "orderbook.rkt" stockfighter-api "utils.rkt"
          "noise-trader.rkt" "mm.rkt" math)
 (provide venue%)
 (define (error-json msg)
