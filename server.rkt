@@ -80,7 +80,7 @@
 
 (define (run-mockfighter [port 8000])
   (define server (new mockfighter-server% [prefix "/"] [port port]))
-  (thread (thunk (send server serve)))
+  (define server-thread (thread (thunk (send server serve))))
   (define begin-trading
     (thunk
      (define instances (send gm get-instances))
@@ -94,4 +94,4 @@
            (begin (send gm run-bots (first instances))
                   (send gm change-fmv (first instances) (instance-symbol i))
                   (loop (alarm-evt (+ (current-milliseconds) 1000))))))))
-  (values server begin-trading))
+  (values server-thread begin-trading))
