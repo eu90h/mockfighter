@@ -3,7 +3,7 @@ Introduction
 Mockfighter is a web API front-end to a limit order book exchange, based on [Stockfighter](http://www.stockfighter.io).
 It requires [Racket](http://www.racket-lang.org) to run.
 
-The goal is to be 1-1 compatible with the stockfighter API.
+The goal is to be 1-1 compatible with the Stockfighter API.
 
 Currently, two bots are provided: a noisy trader and a market maker (that doesn't understand its job).
 Both are extremely stupid, as anything better would probably give away solutions to Stockfighter levels.
@@ -15,7 +15,7 @@ or install from DrRacket.
 
 Quickstart
 ==========
-The following snippet shows how to run the mockfighter server on http://localhost:8000/
+The following snippet shows how to run the Mockfighter server on http://localhost:8000/
 
 `` (require mockfighter) ``
 
@@ -45,7 +45,7 @@ The player interacts with the market by making HTTP GET and POST requests to var
 
 Differences
 ===========
-Getting a stock's orderbook returns more detailed order data than stockfighter.
+Getting a stock's orderbook returns more detailed order data than Stockfighter.
 
 Only market and limit orders are supported.
 
