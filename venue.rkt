@@ -14,8 +14,10 @@
     (define/public (get-stocks) (hash-keys stocks))
     (define/public (get-bots) bots)
     (define/public (add-stock name)
-      (hash-set! stocks name (new matching-engine% [orderbook (new-orderbook)]))
-      (hash-set! fmvs name (random-integer 1000 10000)))
+      (if (string? name)
+          (begin (hash-set! stocks name (new matching-engine% [orderbook (new-orderbook)]))
+                 (hash-set! fmvs name (random-integer 1000 10000)))
+          (error-json "invalid stock name")))
     
     (define/public (cancel-order symbol id)
       (define me (hash-ref stocks symbol #f))
@@ -28,12 +30,15 @@
     
     (define/public (change-fmv stock)
       (define fmv (hash-ref fmvs stock #f))
-      (define change (* (if (= 1 (random 2)) -1 1) (random-integer 20 500)))
-      (hash-set! fmvs stock (+ fmv change)))
+      (if (equal? fmv #f)
+          (error-json "stock fmv not found")
+          (let ([change (* (if (= 1 (random 2)) -1 1) (random-integer 20 500))])
+            (hash-set! fmvs stock (+ fmv change)))))
     
     (define/public (run-bots)
-      (for ([bot (in-list bots)])
-        (send bot trade)))
+      (unless (equal? null bots)
+        (for ([bot (in-list bots)])
+          (send bot trade))))
     
     (define/public (add-bot type account venue-name symbol)
       (define bot (cond
@@ -52,10 +57,10 @@
     
     (define/public (handle-order order)
       (define symbol (hash-ref order `symbol #f))
-      (if (eq? #f symbol)
+      (if (equal? #f symbol)
           (error-json "symbol not found")
           (let ([me (hash-ref stocks symbol #f)])
-            (if (eq? #f me)
+            (if (equal? #f me)
                 (error-json "symbol not found on exchange")
                 (send me handle-order order)))))
     
