@@ -5,7 +5,7 @@
          "server.rkt"
          stockfighter-api)
 (define-values (server-thread run-bots) (run-mockfighter))
-(sleep 3)
+(sleep 1)
 (define sf (new stockfighter% [key "1C2B3A4"]))
 (send sf set-ob-endpoint "127.0.0.1")
 (send sf set-gm-endpoint "127.0.0.1")
@@ -25,3 +25,4 @@
 (send sf get-stocks venue)
 (send sf cancel-order venue stock buy-id)
 (send sf get-orderbook venue stock)
+(run-bots)
