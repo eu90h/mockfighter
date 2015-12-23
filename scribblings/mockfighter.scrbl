@@ -8,7 +8,7 @@
 @defmodule[mockfighter]
 
 @section[#:tag "intro"]{Introduction}
-Mockfighter is a web API frontend for a limit order book (LOB) exchange. The API was designed with the
+Mockfighter is a web API frontend for a limit order book exchange. The API was designed with the
 intent of being as close to 1-1 with Stockfighter's API as possible.
 
 Currently, two bots are provided: a noisy trader and a market maker (that doesn't understand its job).
@@ -21,7 +21,9 @@ The following snippet shows how to run the mockfighter server on http://localhos
 This will begin running the server in a separate thread, which is returned
 along with a thunk begin-trading which, when called, starts the bots trading loop.
 
-Next, create an instance by making a GET request to http://localhost:8000/gm/api/instances/new
+Next, create an instance by making a POST request to http://localhost:8000/gm/levels/any-string-here
+
+This creates an instance of the level called any-string-here.
 
 Then you may call the begin-trading procedure to spur the traders into action.
 
@@ -49,7 +51,9 @@ Quotes don't contain bid/ask depth, just best offer sizes.
 
 Websockets aren't supported yet.
 
-I hope to fix most of this soon.
+GM API not completely implemented.
+
+New level cmd returns different response
 
 @section[#:tag "api"]{API Reference}
 I was able to use my stockfighter client without modification and it seems to work, so hopefully you can too.

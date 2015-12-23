@@ -1,6 +1,6 @@
 Introduction
 =============
-Mockfighter is a web API front-end to a limit order book, based on [Stockfighter](http://www.stockfighter.io).
+Mockfighter is a web API front-end to a limit order book exchange, based on [Stockfighter](http://www.stockfighter.io).
 It requires [Racket](http://www.racket-lang.org) to run.
 
 The goal is to be 1-1 compatible with the stockfighter API.
@@ -32,7 +32,7 @@ Mockfighter requires (like Stockfighter) api keys, which are set in request head
 
 How It Works
 ============
-A player registers with the game master by making a GET request to http://localhost:8000/gm/api/instances/new. This creates a new instance of an exchange, providing one stock.
+A player registers with the game master by making an empty POST to http://localhost:8000/gm/levels/any-string-here. This creates a new instance of a level named any-string-here.
 
 A json object is returned containing an account ID, a venue name, and a stock symbol.
 
@@ -53,5 +53,6 @@ Quotes don't contain bid/ask depth, just best offer sizes.
 
 Websockets aren't supported yet.
 
-I hope to fix most of this soon.
+GM API not completely implemented.
 
+New level cmd returns different response
