@@ -1,0 +1,27 @@
+#lang racket
+(require stockfighter-api math)
+(provide retail-trader%)
+(define noise-dist (normal-dist 0 100))
+(define (gaussian-noise)
+    (sample noise-dist))
+(define retail-trader%
+  (class object% (super-new)
+    (init-field api-key account venue-name stock venue)
+    (field [sf (new stockfighter% [key api-key])])
+    (send sf set-ob-endpoint "127.0.0.1")
+    (send sf set-gm-endpoint "127.0.0.1")
+    (send sf set-port 8000)
+    (send sf ssl-off)
+   
+    (define/public (set-api-key key)
+      (set! api-key key)
+      (set! sf (new stockfighter% [key api-key]))
+      (send sf set-ob-endpoint "127.0.0.1")
+      (send sf set-gm-endpoint "127.0.0.1")
+      (send sf set-port 8000)
+      (send sf ssl-off))
+    
+    (define/public (trade)
+      ;(define fmv (inexact->exact (truncate (+ (send venue get-fmv stock) (gaussian-noise)))))
+      (send sf post-order account venue-name stock 0 (random-integer 5 20) (if (= 1 (random 2))
+                                                                                  "buy" "sell") "market"))))
