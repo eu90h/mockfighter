@@ -62,7 +62,9 @@
           (let ([me (hash-ref stocks symbol #f)])
             (if (equal? #f me)
                 (error-json "symbol not found on exchange")
-                (send me handle-order order)))))
+                (if (integer? (order-price order))
+                    (send me handle-order order)
+                    (error-json "price must be an integer"))))))
     
     (define/public (get-orderbook stock)
       (define me (hash-ref stocks stock #f))
