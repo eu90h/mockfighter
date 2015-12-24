@@ -1,44 +1,21 @@
 #lang racket
 (require "utils.rkt" "matching-engine.rkt" "orderbook.rkt" "venue.rkt" json math net/rfc6455 stockfighter-api)
 (provide game-master% (struct-out instance))
-(define-struct instance (owner data venue symbol ticker-socket executions-socket) #:mutable)
+(define-struct instance (owner data venue venue-name symbol ticker-socket executions-socket) #:mutable)
 (define game-master%
   (class object% (super-new)
     (field [instances (make-hash)]
            [stop-sockets null])
-    (define/public (new-instance api-key)
-      (define venue-name (generate-exchange-name))
-      (define venue (new venue% [name venue-name]))
-      (define account (generate-account-number))
-      (define symbol (generate-stock-name))
-      (send venue add-stock symbol)
-      (for ([i (in-range 0 10)])
-        (send venue add-bot `mm (generate-account-number) venue-name symbol))
-      (for ([i (in-range 0 100)])
-        (send venue add-bot `noise (generate-account-number) venue-name symbol))
-      (for ([i (in-range 0 30)])
-        (send venue add-bot `noise (generate-account-number) venue-name symbol))
-      
-      (define response (hash 'account account
-                             'symbol symbol
-                             'venue venue-name
-                             'ok #t))
-      (hash-set! instances api-key (instance account response venue symbol #f #f))
-      (define ticker-tape-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape/stocks/" symbol))
-
-      (define ticker-tape-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape"))
-
-      (define executions-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions"))
     
-      (define executions-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions/stocks/" symbol))
-      
-      
+    (define (open-websockets api-key venue-name account symbol)
+      (define ticker-tape-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape/stocks/" symbol))
+      (define ticker-tape-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape"))
+      (define executions-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions"))
+      (define executions-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions/stocks/" symbol))     
       (define (execution-connection-handler c)
         (set-instance-executions-socket! (hash-ref instances api-key) c))
-      
       (define (ticker-connection-handler c)
         (set-instance-ticker-socket! (hash-ref instances api-key) c))
-      
       (set! stop-sockets
             (ws-serve* #:port 8001
                        (ws-service-mapper
@@ -49,7 +26,15 @@
                         [executions-url
                          [(#f) execution-connection-handler]]
                         [executions-url-2
-                         [(#f) execution-connection-handler]])))
+                         [(#f) execution-connection-handler]]))))
+    
+    (define (add-bots api-key account venue venue-name symbol)
+      (for ([i (in-range 0 10)])
+        (send venue add-bot `mm (generate-account-number) venue-name symbol))
+      (for ([i (in-range 0 100)])
+        (send venue add-bot `noise (generate-account-number) venue-name symbol))
+      (for ([i (in-range 0 30)])
+        (send venue add-bot `noise (generate-account-number) venue-name symbol))
       (thread (thunk
                (sleep 2)
                (define bots (get-bots api-key))
@@ -60,7 +45,21 @@
                      (begin (run-bots api-key)
                             (change-fmv api-key symbol)
                             (loop trading-day-alarm))
-                     (loop (alarm-evt (+ (current-milliseconds) 5000)))))))
+                     (loop (alarm-evt (+ (current-milliseconds) 5000))))))))
+    
+    (define/public (new-instance api-key)
+      (define venue-name (generate-exchange-name))
+      (define venue (new venue% [name venue-name]))
+      (define account (generate-account-number))
+      (define symbol (generate-stock-name))
+      (define response (hash 'account account
+                             'symbol symbol
+                             'venue venue-name
+                             'ok #t))
+      (hash-set! instances api-key (instance account response venue venue-name symbol #f #f))
+      (send venue add-stock symbol)
+      (open-websockets api-key venue-name account symbol)
+      (add-bots api-key account venue venue-name symbol)
       response)
     
     (define/public (get-instances)
@@ -121,17 +120,19 @@
                 (send (instance-venue (hash-ref instances api-key)) get-orderbook stock)
                 (error-json "venue not found")))))
     
-    (define (send-quote instance q)
+    (define (send-quote api-key instance q)
       (define ticker (instance-ticker-socket instance))
       (if (ws-conn-closed? ticker)
           (set-instance-ticker-socket! instance #f)
-          (ws-send! ticker (jsexpr->string q))))
+          (with-handlers ([exn? (lambda (e) (set-instance-ticker-socket! instance #f))])
+            (ws-send! ticker (jsexpr->string q)))))
     
-    (define (send-execution instance e)
+    (define (send-execution api-key instance e)
       (define executions (instance-executions-socket instance))
       (if (ws-conn-closed? executions)
           (set-instance-executions-socket! instance #f)
-          (ws-send! executions (jsexpr->string e))))
+          (with-handlers ([exn? (lambda (e) (set-instance-executions-socket! instance #f))])
+            (ws-send! executions (jsexpr->string e)))))
     
     (define/public (cancel-order api-key venue stock order-id)
       (let ([instance (hash-ref instances api-key #f)])
@@ -140,17 +141,17 @@
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
                 (let ([response (send (instance-venue instance) cancel-order stock order-id)]
                       [ticker (instance-ticker-socket instance)])
-                  (handle-executions instance response)
+                  (handle-executions api-key instance response)
                   (unless (equal? #f ticker)
-                    (send-quote instance (make-hash (list (cons `ok #t)
-                                                          (cons `quote (send (instance-venue instance) get-quote (instance-symbol instance)))))))
+                    (send-quote api-key instance (make-hash (list (cons `ok #t)
+                                                                  (cons `quote (send (instance-venue instance) get-quote (instance-symbol instance)))))))
                   response)
                 (error-json "venue not found")))))
     
     (define (is-players-order? instance order)
       (equal? (order-account order) (instance-owner instance)))
     
-    (define (handle-executions instance response)
+    (define (handle-executions api-key instance response)
       (define executions (instance-executions-socket instance))
       (unless (equal? #f executions)
         (cond [(list? response)
@@ -158,14 +159,14 @@
                  (unless (null? users-orders)
                    (for ([order (in-list users-orders)])
                      (when (or (equal? #f (order-open? response)) (not (null? (order-fills response))))
-                       (send-execution instance (make-hash (list (cons `ok #t)
-                                                                 (cons `order order))))))))]
+                       (send-execution api-key instance (make-hash (list (cons `ok #t)
+                                                                         (cons `order order))))))))]
               [(hash? response)
                (when (is-players-order? instance response)
                  (when (or (equal? #f (order-open? response))
                            (equal? #f (null? (order-fills response))))
-                   (send-execution instance (make-hash (list (cons `ok #t)
-                                                             (cons `order response))))))])))
+                   (send-execution api-key instance (make-hash (list (cons `ok #t)
+                                                                     (cons `order response))))))])))
     
     (define/public (handle-order api-key venue stock order)
       (define account (hash-ref order `account #f))
@@ -179,9 +180,9 @@
                               (let ([response (send (instance-venue instance) handle-order order)]
                                     [ticker (instance-ticker-socket instance)])
                                 (unless (equal? #f ticker)
-                                  (send-quote instance (make-hash (list (cons `ok #t)
+                                  (send-quote api-key instance (make-hash (list (cons `ok #t)
                                                                         (cons `quote (send (instance-venue instance) get-quote (instance-symbol instance)))))))
-                                (handle-executions instance response)
+                                (handle-executions api-key instance response)
                                 response)))))]))))
 (module+ test
   (define gm (new game-master%))
