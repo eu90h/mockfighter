@@ -1,25 +1,51 @@
 #lang racket
-(require "utils.rkt" "matching-engine.rkt" "orderbook.rkt" "venue.rkt" math)
+(require "utils.rkt" "matching-engine.rkt" "orderbook.rkt" "venue.rkt" json math net/rfc6455 stockfighter-api)
 (provide game-master% (struct-out instance))
-(define-struct instance (owner data venue symbol))
+(define-struct instance (owner data venue symbol ticker-socket executions-socket) #:mutable)
 (define game-master%
   (class object% (super-new)
-    (field [instances (make-hash)])
+    (field [instances (make-hash)]
+           [stop-sockets null])
     (define/public (new-instance api-key)
       (define venue-name (generate-exchange-name))
       (define venue (new venue% [name venue-name]))
       (define account (generate-account-number))
       (define symbol (generate-stock-name))
       (send venue add-stock symbol)
-    ;  (displayln (send venue add-bot `mm))
       (send venue add-bot `mm (generate-account-number) venue-name symbol)
-       (send venue add-bot `noise (generate-account-number) venue-name symbol)
+      (send venue add-bot `noise (generate-account-number) venue-name symbol)
       
       (define response (hash 'account account
                              'symbol symbol
                              'venue venue-name
                              'ok #t))
-      (hash-set! instances api-key (instance account response venue symbol))
+      (hash-set! instances api-key (instance account response venue symbol #f #f))
+      (define ticker-tape-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape/stocks/" symbol))
+
+      (define ticker-tape-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/tickertape"))
+
+      (define executions-url (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions"))
+    
+      (define executions-url-2 (string-append "/ob/api/ws/" account "/venues/" venue-name "/executions/stocks/" symbol))
+      
+      
+      (define (execution-connection-handler c)
+        (set-instance-executions-socket! (hash-ref instances api-key) c))
+      
+      (define (ticker-connection-handler c)
+        (set-instance-ticker-socket! (hash-ref instances api-key) c))
+      
+      (set! stop-sockets
+            (ws-serve* #:port 8001
+                       (ws-service-mapper
+                        [ticker-tape-url
+                         [(#f) ticker-connection-handler]]
+                        [ticker-tape-url-2
+                         [(#f) ticker-connection-handler]]
+                        [executions-url
+                         [(#f) execution-connection-handler]]
+                        [executions-url-2
+                         [(#f) execution-connection-handler]])))
       response)
     
     (define/public (get-instances)
@@ -55,6 +81,7 @@
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
                 (send (instance-venue instance) get-order-status stock order-id)
                 (error-json "venue not found")))))
+    
     (define/public (get-quote api-key venue stock)
       (let ([instance (hash-ref instances api-key #f)])
         (if (equal? #f instance)
@@ -62,6 +89,7 @@
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
                 (send (instance-venue instance) get-quote stock)
                 (error-json "venue not found")))))
+    
     (define/public (get-stocks api-key venue)
        (let ([instance (hash-ref instances api-key #f)])
         (if (equal? #f instance)
@@ -69,6 +97,7 @@
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
                 (instance-symbol instance)
                 (error-json "venue not found")))))
+    
     (define/public (get-orderbook api-key venue stock)
        (let ([instance (hash-ref instances api-key #f)])
         (if (equal? #f instance)
@@ -76,13 +105,39 @@
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
                 (send (instance-venue (hash-ref instances api-key)) get-orderbook stock)
                 (error-json "venue not found")))))
+    
     (define/public (cancel-order api-key venue stock order-id)
       (let ([instance (hash-ref instances api-key #f)])
         (if (equal? #f instance)
             (error-json "instance not running")
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
-                (send (instance-venue instance) cancel-order stock order-id)
+                (let ([response (send (instance-venue instance) cancel-order stock order-id)]
+                      [ticker (instance-ticker-socket instance)])
+                  (unless (equal? #f ticker)
+                    (displayln stock)
+                    (ws-send! ticker (jsexpr->string (make-hash (list (cons `ok #t)
+                                                      (cons `quote (send (instance-venue instance) get-quote (instance-symbol instance))))))))
+                  response)
                 (error-json "venue not found")))))
+    
+    (define (handle-executions instance response)
+      (define executions (instance-executions-socket instance))
+      (define players-accnt (instance-owner instance))
+      (unless (equal? #f executions)
+        (cond [(list? response)
+               (let ([users-orders (filter (lambda (o) (equal? (hash-ref o `account "") players-accnt)) response)])
+                 (unless (null? users-orders)
+                   (for ([order (in-list users-orders)])
+                     (when (or (equal? #f (order-open? response)) (equal? #f (null? (order-fills response))))
+                         (ws-send! executions (jsexpr->string (make-hash (list (cons `ok #t)
+                                                                               (cons `order order)))))))))]
+              [(hash? response)
+               (when (equal? (hash-ref response `account "") players-accnt)
+                 (when (or (equal? #f (order-open? response))
+                           (equal? #f (null? (order-fills response))))
+                   (ws-send! executions (jsexpr->string (make-hash (list (cons `ok #t)
+                                                                         (cons `order response)))))))])))
+    
     (define/public (handle-order api-key venue stock order)
       (define account (hash-ref order `account #f))
       (cond [(equal? #f account) (error-json "order missing account number")]
@@ -92,7 +147,13 @@
                         (let ([venue-name (hash-ref order `venue #f)])
                           (if (or (equal? #f venue-name) (not (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue-name)))
                               (error-json "venue not found")
-                              (send (instance-venue instance) handle-order order)))))]))))
+                              (let ([response (send (instance-venue instance) handle-order order)]
+                                    [ticker (instance-ticker-socket instance)])
+                                (unless (equal? #f ticker)
+                                  (ws-send! ticker (jsexpr->string (make-hash (list (cons `ok #t)
+                                                                                    (cons `quote (send (instance-venue instance) get-quote (instance-symbol instance))))))))
+                                (handle-executions instance response)
+                                response)))))]))))
 (module+ test
   (define gm (new game-master%))
   (define data (send gm new-instance "1234"))
