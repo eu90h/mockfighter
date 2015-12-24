@@ -28,10 +28,7 @@
         [else (respond/error "unknown request")]))
 
 (define (handle-game-master-request req api-key [method 'GET]  #:post-data [data null])
-  (cond [(equal? 'GET method) (cond
-                                
-                              ;  [(and (= 2 (length req)) (equal? "instances" (car req)) (equal? "new" (cadr req))) ]
-                                [else (respond/error "unknown request")])]
+  (cond [(equal? 'GET method) (respond/error "unknown request")]
         [(equal? 'POST method) (cond
                                  [(and (= 2 (length req)) (equal? "levels" (car req))) (respond (send gm new-instance api-key))]
                                  [else (respond/error "unknown request")])]
