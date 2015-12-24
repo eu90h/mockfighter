@@ -2,8 +2,7 @@
 (require "matching-engine.rkt" "orderbook.rkt" stockfighter-api "utils.rkt"
          "noise-trader.rkt" "mm.rkt" math)
 (provide venue%)
-(define (error-json msg)
-  (make-hash (list (cons `ok #f) (cons `error msg))))
+
 (define venue%
   (class object% (super-new)
     (init-field name)
