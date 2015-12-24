@@ -1,4 +1,3 @@
-; An implementation of an order book
 #lang racket
 (require stockfighter-api data/heap)
 (provide (all-defined-out))
