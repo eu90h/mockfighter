@@ -1,9 +1,6 @@
 #lang racket
 (require stockfighter-api math)
 (provide retail-trader%)
-(define noise-dist (normal-dist 0 100))
-(define (gaussian-noise)
-    (sample noise-dist))
 (define retail-trader%
   (class object% (super-new)
     (init-field api-key account venue-name stock venue)
