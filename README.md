@@ -19,16 +19,15 @@ The following snippet shows how to run the Mockfighter server on http://localhos
 
 `` (require mockfighter) ``
 
-`` (define-values (server-thread begin-trading) (run-mockfighter)) ``
+`` (define server-thread (run-mockfighter)) ``
 
-This will begin running the server in a separate thread, which is returned
-along with a thunk begin-trading which, when called, starts the bots trading loop.
+This will begin running the server in a separate thread. 
 
 Next, create an instance of a level by POSTing to http://localhost:8000/gm/levels/any-string-here
 
 This will create an instance of the level "any-string-here".
 
-Then you may call the begin-trading procedure to spur the traders into action.
+The bots will begin trading two seconds after an instance is created.
 
 Mockfighter requires (like Stockfighter) api keys, which are set in request headers. Any string will do here.
 
