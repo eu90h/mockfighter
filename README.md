@@ -5,8 +5,8 @@ It requires [Racket](http://www.racket-lang.org) to run.
 
 The goal is to be 1-1 compatible with the Stockfighter API.
 
-Currently, two bots are provided: a noisy trader and a market maker (that doesn't understand its job).
-Both are extremely stupid, as anything better would probably give away solutions to Stockfighter levels.
+Currently, three bots are provided: noisy traders, retail traders, and market makers.
+All are extremely stupid, as anything better would probably give away solutions to Stockfighter levels.
 
 Background
 ==========
@@ -61,6 +61,36 @@ and the traders are informed of this value before making trades.
 Every trading day lasts 5 seconds. At the end of each day, the fair market value changes.
 
 The player interacts with the market by making HTTP GET and POST requests to various urls, blah blah blah :P
+
+GM API Reference
+================
+* to start a new level: POST to `http://localhost:8000/gm/levels/<any-string-here>`
+
+OrderBook API Reference
+=======================
+All these commands have the url `http://localhost:8000/ob/api/` as a root. For more detailed information, see the Stockfighter API docs.
+
+* to post an order: POST a json object containing your account number, venue name, stock name, price, qty, direction, and order type to `venues/<venue-name>/stocks/<stock-name>/orders`
+
+* to cancel an order: POST to `venues/<venue-name>/stocks/<stock-name>/orders/<order-id>/cancel`
+
+* to get a market quote: GET `venues/<venue-name>/stocks/<stock-name>/quote`
+
+* to get a snapshot of the orderbook: GET `venues/<venue-name>/stocks/<stock-name>`
+
+* to get an order's status: GET `venues/<venue-name>/stocks/<stock-name>/orders/<order-id>`
+
+Ticker & Order Execution Feeds
+===============================
+As in Stockfighter, it's possible to open ticker and execution feeds using websockets.
+
+Once a level is instantiated (see GM API reference section), you may open the feeds.
+
+* to open the ticker feed: open a websocket connection to the address `ws://127.0.0.1:8001/ob/api/ws/<account-id>/venues/<venue-name>/tickertape/stocks/<stock-name>`. Alternatively, you can use the less-specific address `ws://127.0.0.1:8001/ob/api/ws/<account-id>/venues/<venue-name>/tickertape`.
+
+* to open the executions feed: open a websocket connection to the address `ws://127.0.0.1:8001/ob/api/ws/<account-id>/venues/<venue-name>/executions/stocks/<stock-name>`. Alternatively, you can use the less-specific address `ws://127.0.0.1:8001/ob/api/ws/<account-id>/venues/<venue-name>/executions`.
+
+The web sockets time out after about 5 minutes.
 
 Differences
 ===========
