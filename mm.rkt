@@ -1,6 +1,9 @@
 #lang racket
 (require stockfighter-api math)
 (provide mm%)
+(define noise-dist (normal-dist 0 10))
+(define (gaussian-noise)
+  (sample noise-dist))
 (define mm%
   (class object% (super-new)
     (init-field api-key account venue-name stock venue)
@@ -19,6 +22,6 @@
       (send sf ssl-off))
     
     (define/public (trade)
-      (define fmv (send venue get-fmv stock))
+      (define fmv (inexact->exact (truncate (+ (send venue get-fmv stock) (gaussian-noise)))))
       (send sf post-order account venue-name stock fmv (random-integer 20 100) (if (= 1 (random 2))
                                                                                    "buy" "sell") "limit"))))
