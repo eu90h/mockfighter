@@ -46,6 +46,17 @@
                          [(#f) execution-connection-handler]]
                         [executions-url-2
                          [(#f) execution-connection-handler]])))
+      (thread (thunk
+               (sleep 2)
+               (define bots (get-bots api-key))
+               (for ([bot (in-list bots)])
+                 (send bot set-api-key api-key))
+               (let loop ([trading-day-alarm (alarm-evt (+ (current-milliseconds) 5000))])
+                 (if (equal? #f (sync/timeout 0 trading-day-alarm))
+                     (begin (run-bots api-key)
+                            (change-fmv api-key symbol)
+                            (loop trading-day-alarm))
+                     (loop (alarm-evt (+ (current-milliseconds) 5000)))))))
       response)
     
     (define/public (get-instances)

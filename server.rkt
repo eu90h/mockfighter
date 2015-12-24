@@ -78,17 +78,5 @@
 (define (run-mockfighter [port 8000])
   (define server (new mockfighter-server% [prefix "/"] [port port]))
   (define server-thread (thread (thunk (send server serve))))
-  (define begin-trading
-    (thunk
-     (define instances (send gm get-instances))
-     (define i (hash-ref (send gm get-instance-data) (first instances)))
-     (define bots (send gm get-bots (first instances)))
-     (for ([bot (in-list bots)])
-       (send bot set-api-key (first instances)))
-     (let loop ([trading-day-alarm (alarm-evt (+ (current-milliseconds) 1000))])
-       (if (equal? #f (sync/timeout 0 trading-day-alarm))
-           (loop trading-day-alarm)
-           (begin (send gm run-bots (first instances))
-                  (send gm change-fmv (first instances) (instance-symbol i))
-                  (loop (alarm-evt (+ (current-milliseconds) 1000))))))))
-  (values server-thread begin-trading))
+  
+  server-thread)

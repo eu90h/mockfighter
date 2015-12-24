@@ -4,7 +4,7 @@
          "utils.rkt"
          "server.rkt"
          stockfighter-api)
-(define-values (server-thread run-bots) (run-mockfighter))
+(define server-thread (run-mockfighter))
 (sleep 2)
 (define sf (new stockfighter% [key "1C2B3A4"]))
 (send sf set-ob-endpoint "127.0.0.1")
@@ -26,7 +26,5 @@
 (send sf cancel-order venue stock buy-id)
 (send sf get-orderbook venue stock)
 
-(define bot-thread (thread (thunk (run-bots))))
 (sleep 25) ; wait roughly 5 trading days
 (kill-thread server-thread)
-(kill-thread bot-thread)

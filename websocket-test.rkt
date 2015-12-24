@@ -1,7 +1,7 @@
 #lang racket
 (require stockfighter-api mockfighter net/url net/rfc6455)
 
-(define-values (server-thread run-bots) (run-mockfighter))
+(define server-thread (run-mockfighter))
 (sleep 2)
 
 (define sf (new stockfighter% [key "1C2B3A4"]))
@@ -31,5 +31,6 @@
       (displayln (read-feed ticker)))
     (loop)))
 
-(thread start)
-(run-bots)
+(define t (thread start))
+(sleep 10)
+(kill-thread t)
