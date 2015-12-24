@@ -33,7 +33,7 @@ or install from DrRacket.
 
 Quickstart
 ==========
-The following snippet shows how to run the Mockfighter server on http://localhost:8000/
+The following snippet shows how to run the Mockfighter server on `http://localhost:8000/`
 
 `` (require mockfighter) ``
 
@@ -41,17 +41,19 @@ The following snippet shows how to run the Mockfighter server on http://localhos
 
 This will begin running the server in a separate thread. 
 
-Next, create an instance of a level by POSTing to http://localhost:8000/gm/levels/any-string-here
+Next, create an instance of a level by POSTing to `http://localhost:8000/gm/levels/<any-string-here>`
 
 This will create an instance of the level "any-string-here".
 
 The bots will begin trading two seconds after an instance is created.
 
-Mockfighter requires api keys, which are set in request headers. Any string will do here.
+Mockfighter requires an api key, which should be set in a `X-Starfighter-Authorization:<api-key-here>` HTTP header. Any string will do here.
+
+Additionally, the GM API requires a header `Cookie:api_key=<api-key-here>` to be set. The same key should be used for both headers.
 
 How It Works
 ============
-A player registers with the game master by making an empty POST to http://localhost:8000/gm/levels/any-string-here. This creates a new instance of a level named any-string-here.
+A player registers with the game master by making an empty POST to `http://localhost:8000/gm/levels/<any-string-here>`. This creates a new instance of a level named any-string-here.
 
 A json object is returned containing an account ID, a venue name, and a stock symbol.
 
@@ -60,7 +62,7 @@ and the traders are informed of this value before making trades.
 
 Every trading day lasts 5 seconds. At the end of each day, the fair market value changes.
 
-The player interacts with the market by making HTTP GET and POST requests to various urls, blah blah blah :P
+The player interacts with the market by making HTTP GET and POST requests to various urls (see the reference below, or the Stockfighter docs).
 
 GM API Reference
 ================
