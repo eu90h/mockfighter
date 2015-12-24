@@ -30,7 +30,7 @@ Then you may call the begin-trading procedure to spur the traders into action.
 Mockfighter requires (like Stockfighter) api keys, which are set in request headers. Any string will do here.
 
 @section[#:tag "more"]{How It Works}
-A player registers with the game master by making a GET request to http://localhost:8000/gm/api/instances/new. This creates a new instance of an exchange, providing one stock.
+A player registers with the game master by making a GET request to http://localhost:8000/gm/levels/any-string-here. This creates a new instance of a level named any-string-here.
 
 A json object is returned containing an account ID, a venue name, and a stock symbol.
 
@@ -48,8 +48,6 @@ Getting a stock's orderbook returns more detailed order data than stockfighter.
 Only market and limit orders are supported.
 
 Quotes don't contain bid/ask depth, just best offer sizes.
-
-Websockets aren't supported yet.
 
 GM API not completely implemented.
 

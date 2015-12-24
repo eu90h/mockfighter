@@ -53,8 +53,6 @@ Only market and limit orders are supported.
 
 Quotes don't contain bid/ask depth, just best offer sizes.
 
-Websockets aren't supported yet.
-
-GM API not completely implemented.
+GM API not completely implemented (only starting levels is supported).
 
 New level cmd returns different response
