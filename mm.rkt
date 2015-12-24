@@ -1,7 +1,7 @@
 #lang racket
 (require stockfighter-api math)
 (provide mm%)
-(define noise-dist (normal-dist 0 10))
+(define noise-dist (normal-dist 0 60))
 (define (gaussian-noise)
   (sample noise-dist))
 (define mm%

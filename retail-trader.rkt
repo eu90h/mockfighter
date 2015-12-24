@@ -22,6 +22,8 @@
       (send sf ssl-off))
     
     (define/public (trade)
-      ;(define fmv (inexact->exact (truncate (+ (send venue get-fmv stock) (gaussian-noise)))))
-      (send sf post-order account venue-name stock 0 (random-integer 5 20) (if (= 1 (random 2))
-                                                                                  "buy" "sell") "market"))))
+      (send sf post-order account venue-name stock 0 (if (= 1 (random-integer 1 20))
+                                                         (random-integer 20 100)
+                                                         (random-integer 5 20))
+            (if (= 1 (random 2))
+                "buy" "sell") "market"))))

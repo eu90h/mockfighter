@@ -1,7 +1,7 @@
 #lang racket
 (require stockfighter-api math)
 (provide noise-trader%)
-(define noise-dist (normal-dist 1 20))
+(define noise-dist (normal-dist 1 100))
 (define (gaussian-noise)
     (sample noise-dist))
 (define noise-trader%
