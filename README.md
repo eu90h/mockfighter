@@ -8,6 +8,24 @@ The goal is to be 1-1 compatible with the Stockfighter API.
 Currently, two bots are provided: a noisy trader and a market maker (that doesn't understand its job).
 Both are extremely stupid, as anything better would probably give away solutions to Stockfighter levels.
 
+Background
+==========
+[Stockfighter](http://stockfighter.io) is a series of challenges revolving around stock markets and automated trading. Mockfighter is essentially an emulator for the game.
+
+A limit order book exchange is a type of market where the participants deal with each other via a limit order book.
+A limit order book is a sort-of dual ledger keeping track of sell and buy orders (called asks and bids respectively).
+
+It may help to think of an order book as a priority queue, prioritized by price first, order placement time second (with earlier orders going first).
+
+A limit order is basically an order that specifies a extremal price. For example, a buy limit order for 10 shares at $2.15
+will be filled for any price up to $2.15. A sell limit order for 10 shares at $2.15 will, on the other hand,
+be filled for any price greater than or equal to $2.15.
+
+The limit order stands in contrast to the market order. The market order specifies only a quantity of shares to be traded.
+A market order will purchase that quantity of shares at whatever price is being offered on the market.
+
+Limit orders give guarantees on the execution price, but at the cost of execution certainty. Market orders are the exact opposite: guaranteeing execution certainty at the cost of price certainty.
+
 Installation
 ============
 `raco pkg install https://github.com/eu90h/mockfighter/`
@@ -29,7 +47,7 @@ This will create an instance of the level "any-string-here".
 
 The bots will begin trading two seconds after an instance is created.
 
-Mockfighter requires (like Stockfighter) api keys, which are set in request headers. Any string will do here.
+Mockfighter requires api keys, which are set in request headers. Any string will do here.
 
 How It Works
 ============
