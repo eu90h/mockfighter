@@ -20,5 +20,5 @@
     
     (define/public (trade)
       (define fmv (send venue get-fmv stock))
-      (displayln (send sf post-order account venue-name stock fmv (random-integer 20 100) (if (= 1 (random 2))
-                                                                                   "buy" "sell") "limit")))))
+      (send sf post-order account venue-name stock fmv (random-integer 20 100) (if (= 1 (random 2))
+                                                                                   "buy" "sell") "limit"))))
