@@ -100,8 +100,6 @@ Getting a stock's orderbook returns more detailed order data than Stockfighter.
 
 Only market and limit orders are supported.
 
-Quotes don't contain bid/ask depth, just best offer sizes.
-
 GM API not completely implemented (only starting levels is supported).
 
 New level cmd returns different response
