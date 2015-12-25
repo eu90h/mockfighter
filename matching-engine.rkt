@@ -21,7 +21,7 @@
       (define order (hash-ref orders id #f))
       (if (equal? #f order)
           (error-json "order not found")
-          (begin (hash-set! order `open #f) (hash-set! orders id order) order)))
+          (begin (hash-set! order `open #f) (hash-set! orders id order) (orderbook-remove! orderbook id) order)))
     (define/public (display)
       (displayln "bids:")
       (print-bids orderbook)
