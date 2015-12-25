@@ -63,7 +63,7 @@
   (cond [(equal? null api-key) (respond/error "api key required")]
         [(equal? #"GET" (request-method req)) (handle-get parts api-key)]
         [(equal? #"POST" (request-method req)) (handle-post parts req api-key)]
-        [(equal? #"DELETE" (request-method req)) (handle-post parts null api-key)]
+        [(equal? #"DELETE" (request-method req)) (handle-post parts req api-key)]
         [else (respond/error "unknown request")]))
   
 (define mockfighter-server%
