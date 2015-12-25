@@ -15,9 +15,11 @@
 (check-true (send sf is-api-up?))
 
 (define game-data (send sf new-instance "test"))
-(define venue (hash-ref game-data 'venue))
-(define stock (hash-ref game-data `symbol))
-(define account (hash-ref game-data 'account))
+(define venues (hash-ref game-data `venues))
+(define stocks (hash-ref game-data `tickers))
+(define venue (first venues))
+(define stock (first stocks))
+(define account (hash-ref game-data `account))
 
 (check-false (send sf is-venue-up? "blah"))
 (check-true (send sf is-venue-up? venue))

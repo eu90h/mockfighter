@@ -1,7 +1,14 @@
 #lang racket
-(require "utils.rkt" "matching-engine.rkt" "orderbook.rkt" "venue.rkt" json math net/rfc6455 stockfighter-api)
+(require "utils.rkt" "matching-engine.rkt" "orderbook.rkt" "venue.rkt"
+         json math net/rfc6455 stockfighter-api racket/generator)
 (provide game-master% (struct-out instance))
-(define-struct instance (owner data venue venue-name symbol ticker-socket executions-socket) #:mutable)
+(define-struct instance (id owner data venue venue-name symbol ticker-socket executions-socket) #:mutable)
+(define generate-id
+  (generator
+   ()
+   (let loop ([id 0])
+     (yield id)
+     (loop (+ 1 id)))))
 (define game-master%
   (class object% (super-new)
     (field [instances (make-hash)]
@@ -52,11 +59,15 @@
       (define venue (new venue% [name venue-name]))
       (define account (generate-account-number))
       (define symbol (generate-stock-name))
+      (define id (generate-id))
       (define response (hash 'account account
-                             'symbol symbol
-                             'venue venue-name
+                             'instanceID id
+                             'tickers (list symbol)
+                             'venues (list venue-name)
+                             'secondsPerTradingDay 5
+                             'instructions (hash 'Instructions "Welcome to Mockfighter. Trade away.")
                              'ok #t))
-      (hash-set! instances api-key (instance account response venue venue-name symbol #f #f))
+      (hash-set! instances api-key (instance id account response venue venue-name symbol #f #f))
       (send venue add-stock symbol)
       (open-websockets api-key venue-name account symbol)
       (add-bots api-key account venue venue-name symbol)

@@ -11,8 +11,8 @@
 (send sf ssl-off)
 
 (define game-data (send sf new-instance "test"))
-(define venue (hash-ref game-data 'venue))
-(define stock (hash-ref game-data `symbol))
+(define venue (first (hash-ref game-data 'venues)))
+(define stock (first (hash-ref game-data `tickers)))
 (define account (hash-ref game-data 'account))
 
 (sleep 2)

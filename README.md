@@ -102,5 +102,3 @@ Differences
 Getting a stock's orderbook returns more detailed order data than Stockfighter.
 
 GM API not completely implemented (only starting levels is supported).
-
-New level cmd returns different response

@@ -46,8 +46,6 @@ Getting a stock's orderbook returns more detailed order data than stockfighter.
 
 GM API not completely implemented.
 
-New level cmd returns different response
-
 @section[#:tag "api"]{API Reference}
 I was able to use my stockfighter client without modification and it seems to work, so hopefully you can too.
 For more information about the API see the Stockfighter reference or your client's documentation.
