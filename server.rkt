@@ -21,7 +21,7 @@
                [(and (= 5 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "quote" (fifth req))) (respond (send gm get-quote api-key (cadr req) (cadddr req)))]
                [(and (= 6 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "orders" (fifth req))) (respond (send gm get-order-status api-key (cadr req) (cadddr req) (string->number (sixth req))))]
                [else (respond/error "unknown request")])]
-        [(equal? 'POST method)
+        [(or (equal? 'POST method) (equal? 'DELETE method))
            (cond [(and (= 5 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "orders" (fifth req))) (respond (send gm handle-order api-key (cadr req) (caddr req) (hash-copy (string->jsexpr (bytes->string/utf-8 data)))))]
                  [(and (= 7 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "orders" (fifth req))) (respond (send gm cancel-order api-key (second req) (fourth req) (string->number (sixth req))))]
                  [else (respond/error "unknown request")])]
@@ -52,7 +52,12 @@
                                      (respond/error "unknown request"))]
         [(equal? "gm" (car req)) (handle-game-master-request (cdr req) api-key 'POST  #:post-data (request-post-data/raw data))]
         [else (respond/error "unknown request")]))
-
+(define (handle-delete req api-key)
+  (cond [(equal? "ob" (car req)) (if (and (not (equal? (cdr req) null))
+                                          (equal? (cadr req) "api"))
+                                     (handle-orderbook-request (cddr req) api-key 'DELETE #:post-data null)
+                                     (respond/error "unknown request"))]
+        [else (respond/error "unknown request")]))
 (define (mockfighter-api req)
   (define parts (map path/param-path (url-path (request-uri req))))
   (define auth-hdr (filter (lambda (h) (equal? 'x-starfighter-authorization (car h))) (request-headers req)))
@@ -63,7 +68,7 @@
   (cond [(equal? null api-key) (respond/error "api key required")]
         [(equal? #"GET" (request-method req)) (handle-get parts api-key)]
         [(equal? #"POST" (request-method req)) (handle-post parts req api-key)]
-        [(equal? #"DELETE" (request-method req)) (handle-post parts req api-key)]
+        [(equal? #"DELETE" (request-method req)) (handle-delete parts api-key)]
         [else (respond/error "unknown request")]))
   
 (define mockfighter-server%
