@@ -28,6 +28,9 @@ Limit orders give guarantees on the execution price, but at the cost of executio
 
 Installation
 ============
+Mockfighter requires the Racket Stockfighter client, located [here](https://github.com/eu90h/stockfighter-racket/).
+
+After that's installed, you can install Mockfighter by running the command 
 `raco pkg install https://github.com/eu90h/mockfighter/`
 or install from DrRacket.
 
