@@ -41,9 +41,6 @@ Every trading day lasts 5 seconds. At the end of each day, the fair market value
 The player interacts with the market by making HTTP GET and POST requests to various urls, blah blah blah :P
 
 @section[#:tag "differences"]{Differences from Stockfighter}
-
-Getting a stock's orderbook returns more detailed order data than stockfighter.
-
 GM API not completely implemented.
 
 @section[#:tag "api"]{API Reference}

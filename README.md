@@ -99,6 +99,4 @@ The web sockets time out after about 5 minutes.
 
 Differences
 ===========
-Getting a stock's orderbook returns more detailed order data than Stockfighter.
-
 GM API not completely implemented (only starting levels is supported).

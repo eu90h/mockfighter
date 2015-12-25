@@ -17,9 +17,12 @@
 (define (new-orderbook)
   (orderbook (make-heap order<=?) (make-heap order>=?)))
 
+(define (format-order o)
+  (hash `qty (order-qty o) `price (order-price o) `isBuy (equal? "buy" (order-direction o))))
+
 (define (orderbook->jsexpr ob)
-  (make-hash (list (cons `bids (vector->list (heap->vector (orderbook-bids ob))))
-                   (cons `asks (vector->list (heap->vector (orderbook-asks ob)))))))
+  (make-hash (list (cons `bids (vector->list (vector-map format-order (heap->vector (orderbook-bids ob)))))
+                   (cons `asks (vector->list (vector-map format-order (heap->vector (orderbook-asks ob))))))))
 
 (define (orderbook-add-bid! book bid)
   (heap-add! (orderbook-bids book) bid))
