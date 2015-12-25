@@ -61,6 +61,12 @@
       (open-websockets api-key venue-name account symbol)
       (add-bots api-key account venue venue-name symbol)
       response)
+
+    (define/public (venue-heartbeat api-key venue-name)
+      (define instance (hash-ref instances api-key #f))
+      (make-hash (list (cons `ok (if (equal? #f instance)
+                                     #f
+                                     (equal? venue-name (instance-venue-name instance)))))))
     
     (define/public (get-instances)
       (hash-keys instances))

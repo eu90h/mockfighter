@@ -15,7 +15,7 @@
   (cond [(equal? 'GET method)
          (cond [(equal? null req) (respond/error "unknown request")]
                [(equal? "heartbeat" (car req)) (respond (make-hash (list (cons `ok #t))))]
-               [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "heartbeat" (caddr req))) (respond (make-hash (list (cons `ok #t))))]
+               [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "heartbeat" (caddr req))) (respond (send gm venue-heartbeat api-key (cadr req)))]
                [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req))) (respond (send gm get-stocks api-key (cadr req)))]
                [(and (= 4 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req))) (respond (send gm get-orderbook api-key (cadr req) (cadddr req)))]
                [(and (= 5 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "quote" (fifth req))) (respond (send gm get-quote api-key (cadr req) (cadddr req)))]
