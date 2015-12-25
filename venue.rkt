@@ -1,6 +1,6 @@
 #lang racket
 (require "matching-engine.rkt" "orderbook.rkt" stockfighter-api "utils.rkt"
-         "noise-trader.rkt" "mm.rkt" math)
+         "noise-trader.rkt" "mm.rkt" math data/heap)
 (provide venue%)
 
 (define venue%
@@ -81,7 +81,10 @@
       (if (equal? me #f)
           (error-json "symbol not found on exchange")
           (send me get-order-status order-id)))
-
+    
+    (define (vector-sum v)
+      (foldl + 0 (vector->list v)))
+    
     (define/public (get-quote stock)
       (define me (hash-ref stocks stock #f))
       (if (equal? me #f)
@@ -91,10 +94,14 @@
                          (if (false? o) (make-hash) o)))
             (define ba (let ([o (orderbook-get-best-ask ob)])
                          (if (false? o) (make-hash) o)))
-           
             (define bid (hash-ref bb `price 0))
             (define ask (hash-ref ba `price 0))
             (define bid-size (hash-ref bb `qty 0))
             (define ask-size (hash-ref ba `qty 0))
+            (define bid-ob (heap->vector (orderbook-bids ob)))
+            (define bid-depth (vector-sum (vector-map order-qty bid-ob)))
+            (define ask-ob (heap->vector (orderbook-asks ob)))
+            (define ask-depth (vector-sum (vector-map order-qty ask-ob)))
             (make-hash (list (cons `ok #t) (cons `symbol stock) (cons `venue name) (cons `bid bid) (cons `ask ask)
-                             (cons `bidSize bid-size) (cons `askSize ask-size) (cons `quoteTime (current-time->string)))))))))
+                             (cons `bidSize bid-size) (cons `askSize ask-size) (cons `quoteTime (current-time->string))
+                             (cons `bidDepth bid-depth) (cons `askDepth ask-depth))))))))
