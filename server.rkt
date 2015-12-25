@@ -14,8 +14,8 @@
 (define (handle-orderbook-request req api-key [method 'GET] #:post-data [data null])
   (cond [(equal? 'GET method)
          (cond [(equal? null req) (respond/error "unknown request")]
-               [(equal? "heartbeat" (car req)) (response (jsexpr->string (make-hash (cons `ok #t))))]
-               [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "heartbeat" (caddr req))) (respond (jsexpr->string (make-hash (cons `ok #t))))]
+               [(equal? "heartbeat" (car req)) (respond (make-hash (list (cons `ok #t))))]
+               [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "heartbeat" (caddr req))) (respond (make-hash (list (cons `ok #t))))]
                [(and (= 3 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req))) (respond (send gm get-stocks api-key (cadr req)))]
                [(and (= 4 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req))) (respond (send gm get-orderbook api-key (cadr req) (cadddr req)))]
                [(and (= 5 (length req)) (equal? "venues" (car req)) (equal? "stocks" (caddr req)) (equal? "quote" (fifth req))) (respond (send gm get-quote api-key (cadr req) (cadddr req)))]
