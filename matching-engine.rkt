@@ -17,16 +17,19 @@
     (define/public (get-orderbook) orderbook)
     (define/public (get-order-status id)
       (hash-ref orders id (error-json "order not found")))
+    
     (define/public (cancel-order id)
       (define order (hash-ref orders id #f))
       (if (equal? #f order)
           (error-json "order not found")
           (begin (hash-set! order `open #f) (hash-set! orders id order) (orderbook-remove! orderbook id) order)))
+
     (define/public (display)
       (displayln "bids:")
       (print-bids orderbook)
       (displayln "asks:")
       (print-asks orderbook))
+    
     (define/public (handle-order o)
       (hash-set! o `ts (current-time->string))
       (hash-set! o `fills null)
@@ -51,9 +54,6 @@
              (cross-bid b)]
             [(equal? "limit" (order-type b)) (orderbook-add-bid! orderbook b) b]
             [else (hash-set! b `open #f)
-                ;  (when (and (equal? "immediate-or-cancel" (order-type b)) (not (= 0 (order-qty b))))
-                ;    (hash-set! b `fills null)
-                ;    (hash-set! b `qty (hash-ref b `originalQty)))
                   b]))
     
     (define/public (handle-ask a [fok-fills null])
@@ -72,7 +72,7 @@
     
     (define/public (cross-ask a [fok-checked? #f])
       (define best-bid (orderbook-get-best-bid orderbook))
-      (unless (or (false? best-bid)  (void? best-bid))
+      (unless (or (false? best-bid) (void? best-bid))
         (if (and (equal? "fill-or-kill" (order-type a)) (false? fok-checked?))
             (let ([qty 0])
               (for ([bid (in-heap (orderbook-bids orderbook))])
@@ -160,7 +160,6 @@
                        (hash-set! orders (order-id b) b)
                    (hash-set! orders (order-id ba) ba)
                        b))]
-               ;(list b ba)))]
                   [(< (order-qty best-ask) (order-qty b))
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
@@ -177,11 +176,8 @@
                        (hash-set! orders (order-id ba0) ba0)
                        (handle-bid b)
                        b))]
-                  ; (append (list ba0) (handle-bid b))))]
                   [else
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
-                     
-                     ; (displayln best-ask)
                      (unless (or (false? ba0)  (void? ba0))
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba0))
                                                                                                    (cons `qty (order-qty ba0))
@@ -296,4 +292,4 @@
                            (cons `account "IFL33491586")
                            (cons `qty 5))))
   (send me display)
-  (displayln (send me get-order-status 6)))
+  (send me get-order-status 6))
