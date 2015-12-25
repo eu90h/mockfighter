@@ -115,7 +115,8 @@
         (if (equal? #f instance)
             (error-json "instance not running")
             (if (equal? (send (instance-venue (hash-ref instances api-key)) get-name) venue)
-                (instance-symbol instance)
+                (make-hash (list (cons `ok #t) (cons `symbols (list (make-hash (list (cons `name (string-append (instance-symbol instance) " Co."))
+                                                                                     (cons `symbol (instance-symbol instance))))))))
                 (error-json "venue not found")))))
     
     (define/public (get-orderbook api-key venue stock)
