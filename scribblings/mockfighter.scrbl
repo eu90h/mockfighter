@@ -44,8 +44,6 @@ The player interacts with the market by making HTTP GET and POST requests to var
 
 Getting a stock's orderbook returns more detailed order data than stockfighter.
 
-Only market and limit orders are supported.
-
 GM API not completely implemented.
 
 New level cmd returns different response
