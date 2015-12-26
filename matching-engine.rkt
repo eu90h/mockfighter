@@ -12,7 +12,7 @@
 (define matching-engine%
   (class object% (super-new)
     (init-field orderbook)
-    (field [orders (make-hash)])
+    (field [orders (make-hash)] [last-trade-data (make-hash (list (cons `last 0) (cons `lastSize 0) (cons `lastTrade "")))])
     (define/public (get-orders)  orders)
     (define/public (get-orderbook) orderbook)
     (define/public (get-order-status id)
@@ -29,6 +29,8 @@
       (print-bids orderbook)
       (displayln "asks:")
       (print-asks orderbook))
+    
+    (define/public (get-last-trade) last-trade-data)
     
     (define/public (handle-order o)
       (hash-set! o `ok #t)
@@ -99,6 +101,9 @@
                        (hash-set! a `fills (append (hash-ref a `fills null) (list (make-hash (list (cons `price (order-price bb))
                                                                                                    (cons `qty (order-qty bb))
                                                                                                    (cons `ts (current-time->string)))))))
+                       (hash-set! last-trade-data `last (order-price bb))
+                       (hash-set! last-trade-data `lastSize (order-qty bb))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! a `qty 0)
                        (hash-set! bb `qty 0)
                        (hash-set! orders (order-id a) a)
@@ -114,6 +119,9 @@
                                                                                                    (cons `qty (order-qty bb0))
                                                                                                    (cons `ts (current-time->string)))))))
                        
+                       (hash-set! last-trade-data `last (order-price bb0))
+                       (hash-set! last-trade-data `lastSize (order-qty bb0))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! a `qty (- (order-qty a) (order-qty bb0)))
                        (hash-set! bb0 `qty 0)
                        (hash-set! bb0 `open #f)
@@ -131,7 +139,10 @@
                                                                                                    (cons `qty (order-qty a))
                                                                                                    (cons `ts (current-time->string)))))))
                        
-                   (hash-set! bb0 `qty (- (order-qty bb0) (order-qty a)))
+                       (hash-set! last-trade-data `last (order-price bb0))
+                       (hash-set! last-trade-data `lastSize (order-qty a))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
+                       (hash-set! bb0 `qty (- (order-qty bb0) (order-qty a)))
                        (hash-set! a `qty 0)
                        (hash-set! a `open #f)
                        (orderbook-add-bid! orderbook bb0)
@@ -162,6 +173,10 @@
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba))
                                                                                                    (cons `qty (order-qty ba))
                                                                                                    (cons `ts (current-time->string)))))))
+                       
+                       (hash-set! last-trade-data `last (order-price ba))
+                       (hash-set! last-trade-data `lastSize (order-qty ba))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! b `qty 0)
                        (hash-set! ba `qty 0)
                        (hash-set! orders (order-id b) b)
@@ -177,6 +192,10 @@
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba0))
                                                                                                    (cons `qty (order-qty ba0))
                                                                                                    (cons `ts (current-time->string)))))))
+
+                       (hash-set! last-trade-data `last (order-price ba0))
+                       (hash-set! last-trade-data `lastSize (order-qty ba0))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! b `qty (- (order-qty b) (order-qty ba0)))
                        (hash-set! ba0 `open #f)
                        (hash-set! ba0 `qty 0)
@@ -185,7 +204,7 @@
                        (handle-bid b)
                        b))]
                   [else
-                   (let* ([ba0 (orderbook-remove-best-ask orderbook)])
+                   (let ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba0))
                                                                                                    (cons `qty (order-qty b))
@@ -194,6 +213,10 @@
                                                                                               (cons `qty (order-qty b))
                                                                                               (cons `ts (current-time->string)))))))
                        
+
+                       (hash-set! last-trade-data `last (order-price ba0))
+                       (hash-set! last-trade-data `lastSize (order-qty b))
+                       (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! ba0 `qty (- (order-qty ba0) (order-qty b)))
                        (hash-set! b `qty 0)
                        (hash-set! b `open #f)
