@@ -31,6 +31,7 @@
       (print-asks orderbook))
     
     (define/public (handle-order o)
+      (hash-set! o `ok #t)
       (hash-set! o `ts (current-time->string))
       (hash-set! o `fills null)
       (hash-set! o `originalQty (order-qty o))
