@@ -44,31 +44,39 @@
             [(equal? "sell" (order-direction o)) (let ([resp (handle-ask o)]) (if (hash? resp) resp o))];(handle-ask o)]
             [else (error-json (string-append "unknown order direction, try buy or sell"))]))
 
+    (define (vector-sum v)
+      (foldl + 0 (vector->list v)))
+    
     (define/public (handle-bid b)
       (hash-set! orders (order-id b) b)
+      (define ask-ob (heap->vector (orderbook-asks orderbook)))
+      (define ask-depth (vector-sum (vector-map order-qty ask-ob)))
       (cond [(= 0 (heap-count (orderbook-asks orderbook)))
              (cond [(equal? "limit" (order-type b))
                     (orderbook-add-bid! orderbook b) b]
                    [else (hash-set! b `open #f) b])]
-            [(equal? "market" (order-type b)) (cross-bid b)]
-            [(<= (order-price (orderbook-get-best-ask orderbook)) (order-price b))
+            [(and (equal? "market" (order-type b)) (>= ask-depth (order-qty b))) (cross-bid b)]
+            [(and (not (equal? "market" (order-type b))) (<= (order-price (orderbook-get-best-ask orderbook)) (order-price b)))
              (cross-bid b)]
             [(equal? "limit" (order-type b)) (orderbook-add-bid! orderbook b) b]
             [else (hash-set! b `open #f)
+                  (when (equal? "market" (order-type b)) (hash-set! b `qty (hash-ref b `originalQty)))
                   b]))
     
     (define/public (handle-ask a [fok-fills null])
       (hash-set! orders (order-id a) a)
-      (define b (orderbook-get-best-bid orderbook))
+      (define bid-ob (heap->vector (orderbook-bids orderbook)))
+      (define bid-depth (vector-sum (vector-map order-qty bid-ob)))
       (cond [(= 0 (heap-count (orderbook-bids orderbook)))
              (cond [(equal? "limit" (order-type a))
                     (orderbook-add-ask! orderbook a) a]
                    [else (hash-set! a `open #f) a])]
-            [(equal? "market" (order-type a)) (cross-bid a)]
-            [(and (not (equal? #f b)) (<= (order-price a) (order-price b)))
+            [(and (equal? "market" (order-type a)) (>= bid-depth (order-qty a))) (cross-bid a)]
+            [(and (not (equal? "market" (order-type a))) (<= (order-price a) (order-price (orderbook-get-best-bid orderbook))))
              (cross-ask a)]
             [(equal? "limit" (order-type a)) (orderbook-add-ask! orderbook a) a]
             [else (hash-set! a `open #f)
+                  (when (equal? "market" (order-type a)) (hash-set! a `qty (hash-ref a `originalQty)))
                   a]))
     
     (define/public (cross-ask a [fok-checked? #f])
@@ -159,7 +167,7 @@
                        (hash-set! b `qty 0)
                        (hash-set! ba `qty 0)
                        (hash-set! orders (order-id b) b)
-                   (hash-set! orders (order-id ba) ba)
+                       (hash-set! orders (order-id ba) ba)
                        b))]
                   [(< (order-qty best-ask) (order-qty b))
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
@@ -211,6 +219,24 @@
                                                 (cons `account "IFL33491586")
                                                 (cons `qty (random 21)))))
                                                (loop (+ 1 id)))))
+   (send me handle-order (make-hash
+                         (list
+                          (cons `price 1299)
+                          (cons `orderType "limit")
+                          (cons `fills null)
+                          (cons `venue "IBQEX")
+                          (cons `direction "sell")
+                          (cons `account "IFL33491586")
+                          (cons `qty 11))))
+   (send me handle-order (make-hash
+                         (list
+                          (cons `price 1299)
+                          (cons `orderType "market")
+                          (cons `fills null)
+                          (cons `venue "IBQEX")
+                          (cons `direction "buy")
+                          (cons `account "IFL33491586")
+                          (cons `qty 20))))
   (send me handle-order (make-hash
                          (list
                           (cons `price 1299)
