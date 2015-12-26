@@ -26,12 +26,15 @@
 
 (define buy-data (send sf post-order account venue stock 1000 40 "buy" "limit"))
 (define sell-data (send sf post-order account venue stock 1050 40 "sell" "limit"))
+(check-true (ok? buy-data))
+(check-true (ok? sell-data))
 (define quote-data (send sf get-quote venue stock))
+(check-true (ok? quote-data))
 (define buy-id (order-id buy-data))
-(send sf get-order-status venue stock buy-id)
-(send sf get-stocks venue)
-(send sf cancel-order venue stock buy-id)
-(send sf get-orderbook venue stock)
+(check-true (ok? (send sf get-order-status venue stock buy-id)))
+(check-true (ok? (send sf get-stocks venue)))
+(check-true (ok? (send sf cancel-order venue stock buy-id)))
+(check-true (ok? (send sf get-orderbook venue stock)))
 
 (sleep 25) ; wait roughly 5 trading days
 (kill-thread server-thread)
