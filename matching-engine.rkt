@@ -60,7 +60,6 @@
              (cross-bid b)]
             [(equal? "limit" (order-type b)) (orderbook-add-bid! orderbook b) b]
             [else (hash-set! b `open #f)
-                  (when (equal? "market" (order-type b)) (hash-set! b `qty (hash-ref b `originalQty)))
                   b]))
     
     (define/public (handle-ask a [fok-fills null])
@@ -76,7 +75,6 @@
              (cross-ask a)]
             [(equal? "limit" (order-type a)) (orderbook-add-ask! orderbook a) a]
             [else (hash-set! a `open #f)
-                  (when (equal? "market" (order-type a)) (hash-set! a `qty (hash-ref a `originalQty)))
                   a]))
     
     (define/public (cross-ask a [fok-checked? #f])
@@ -110,7 +108,7 @@
                    (let* ([bb0 (orderbook-remove-best-bid orderbook)])
                      (unless (or (false? bb0)  (void? bb0))
                        (hash-set! bb0 `fills (append (order-fills bb0) (list (make-hash (list (cons `price (order-price bb0))
-                                                                                              (cons `qty (order-qty a))
+                                                                                              (cons `qty (order-qty bb0))
                                                                                               (cons `ts (current-time->string)))))))
                        (hash-set! a `fills (append (hash-ref a `fills null) (list (make-hash (list (cons `price (order-price bb0))
                                                                                                    (cons `qty (order-qty bb0))
@@ -130,7 +128,7 @@
                                                                                               (cons `qty (order-qty a))
                                                                                               (cons `ts (current-time->string)))))))
                        (hash-set! a `fills (append (hash-ref a `fills null) (list (make-hash (list (cons `price (order-price bb0))
-                                                                                                   (cons `qty (order-qty bb0))
+                                                                                                   (cons `qty (order-qty a))
                                                                                                    (cons `ts (current-time->string)))))))
                        
                    (hash-set! bb0 `qty (- (order-qty bb0) (order-qty a)))
@@ -172,8 +170,9 @@
                   [(< (order-qty best-ask) (order-qty b))
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
+                       
                        (hash-set! ba0 `fills (append (order-fills ba0) (list (make-hash (list (cons `price (order-price ba0))
-                                                                                              (cons `qty (order-qty b))
+                                                                                              (cons `qty (order-qty ba0))
                                                                                               (cons `ts (current-time->string)))))))
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba0))
                                                                                                    (cons `qty (order-qty ba0))
@@ -189,7 +188,7 @@
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
                        (hash-set! b `fills (append (hash-ref b `fills null) (list (make-hash (list (cons `price (order-price ba0))
-                                                                                                   (cons `qty (order-qty ba0))
+                                                                                                   (cons `qty (order-qty b))
                                                                                                    (cons `ts (current-time->string)))))))
                        (hash-set! ba0 `fills (append (order-fills ba0) (list (make-hash (list (cons `price (order-price ba0))
                                                                                               (cons `qty (order-qty b))
@@ -220,6 +219,24 @@
                                                 (cons `qty (random 21)))))
                                                (loop (+ 1 id)))))
    (send me handle-order (make-hash
+                         (list
+                          (cons `price 1299)
+                          (cons `orderType "limit")
+                          (cons `fills null)
+                          (cons `venue "IBQEX")
+                          (cons `direction "sell")
+                          (cons `account "IFL33491586")
+                          (cons `qty 11))))
+   (send me handle-order (make-hash
+                         (list
+                          (cons `price 1299)
+                          (cons `orderType "market")
+                          (cons `fills null)
+                          (cons `venue "IBQEX")
+                          (cons `direction "buy")
+                          (cons `account "IFL33491586")
+                          (cons `qty 20))))
+    (send me handle-order (make-hash
                          (list
                           (cons `price 1299)
                           (cons `orderType "limit")
