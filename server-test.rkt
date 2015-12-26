@@ -29,6 +29,7 @@
 (check-true (ok? buy-data))
 (check-true (ok? sell-data))
 (check-false (ok? (send sf post-order account venue stock -9989 32 "buy" "immediate-or-cancel")))
+(check-false (ok? (send sf post-order account venue stock 9989 0 "buy" "immediate-or-cancel")))
 (define quote-data (send sf get-quote venue stock))
 (check-true (ok? quote-data))
 (define buy-id (order-id buy-data))
