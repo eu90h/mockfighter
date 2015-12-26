@@ -44,7 +44,8 @@
       (hash-set! o `id next-id)
       (set! next-id (+ 1 next-id))
       (define type (order-type o))
-      (cond [(and (not (equal? type "limit")) (not (equal? type "market")) (not (equal? type "fill-or-kill")) (not (equal? type "immediate-or-cancel")))
+      (cond [(< (order-price o) 0) (error-json "price must be non-negative")]
+            [(and (not (equal? type "limit")) (not (equal? type "market")) (not (equal? type "fill-or-kill")) (not (equal? type "immediate-or-cancel")))
              (error-json "unknown order type")]
             [(equal? "buy" (order-direction o)) (handle-bid o)]
             [(equal? "sell" (order-direction o)) (handle-ask o)]
