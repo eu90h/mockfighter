@@ -54,13 +54,11 @@
     
     (define/public (handle-bid b)
       (hash-set! orders (order-id b) b)
-      (define ask-ob (heap->vector (orderbook-asks orderbook)))
-      (define ask-depth (vector-sum (vector-map order-qty ask-ob)))
       (cond [(= 0 (heap-count (orderbook-asks orderbook)))
              (cond [(equal? "limit" (order-type b))
                     (orderbook-add-bid! orderbook b) b]
                    [else (hash-set! b `open #f) b])]
-            [(and (equal? "market" (order-type b)) (>= ask-depth (order-qty b))) (cross-bid b)]
+            [(equal? "market" (order-type b)) (cross-bid b)]
             [(and (not (equal? "market" (order-type b))) (<= (order-price (orderbook-get-best-ask orderbook)) (order-price b)))
              (cross-bid b)]
             [(equal? "limit" (order-type b)) (orderbook-add-bid! orderbook b) b]
@@ -69,13 +67,11 @@
     
     (define/public (handle-ask a [fok-fills null])
       (hash-set! orders (order-id a) a)
-      (define bid-ob (heap->vector (orderbook-bids orderbook)))
-      (define bid-depth (vector-sum (vector-map order-qty bid-ob)))
       (cond [(= 0 (heap-count (orderbook-bids orderbook)))
              (cond [(equal? "limit" (order-type a))
                     (orderbook-add-ask! orderbook a) a]
                    [else (hash-set! a `open #f) a])]
-            [(and (equal? "market" (order-type a)) (>= bid-depth (order-qty a))) (cross-bid a)]
+            [(equal? "market" (order-type a)) (cross-bid a)]
             [(and (not (equal? "market" (order-type a))) (<= (order-price a) (order-price (orderbook-get-best-bid orderbook))))
              (cross-ask a)]
             [(equal? "limit" (order-type a)) (orderbook-add-ask! orderbook a) a]
