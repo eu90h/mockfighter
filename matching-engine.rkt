@@ -12,7 +12,9 @@
 (define matching-engine%
   (class object% (super-new)
     (init-field orderbook)
-    (field [orders (make-hash)] [last-trade-data (make-hash (list (cons `last 0) (cons `lastSize 0) (cons `lastTrade "")))])
+    (field [orders (make-hash)]
+           [next-id 0]
+           [last-trade-data (make-hash (list (cons `last 0) (cons `lastSize 0) (cons `lastTrade "")))])
     (define/public (get-orders)  orders)
     (define/public (get-orderbook) orderbook)
     (define/public (get-order-status id)
@@ -33,17 +35,19 @@
     (define/public (get-last-trade) last-trade-data)
     
     (define/public (handle-order o)
+      (unless (hash-has-key? o `price) (hash-set! o `price 0))
       (hash-set! o `ok #t)
       (hash-set! o `ts (current-time->string))
       (hash-set! o `fills null)
       (hash-set! o `originalQty (order-qty o))
       (hash-set! o `open #t)
-      (hash-set! o `id (generate-id))
+      (hash-set! o `id next-id)
+      (set! next-id (+ 1 next-id))
       (define type (order-type o))
       (cond [(and (not (equal? type "limit")) (not (equal? type "market")) (not (equal? type "fill-or-kill")) (not (equal? type "immediate-or-cancel")))
              (error-json "unknown order type")]
-            [(equal? "buy" (order-direction o)) (let ([resp (handle-bid o)]) (if (hash? resp) resp o))]
-            [(equal? "sell" (order-direction o)) (let ([resp (handle-ask o)]) (if (hash? resp) resp o))];(handle-ask o)]
+            [(equal? "buy" (order-direction o)) (handle-bid o)]
+            [(equal? "sell" (order-direction o)) (handle-ask o)]
             [else (error-json (string-append "unknown order direction, try buy or sell"))]))
 
     (define (vector-sum v)
@@ -108,7 +112,7 @@
                        (hash-set! bb `qty 0)
                        (hash-set! orders (order-id a) a)
                        (hash-set! orders (order-id bb) bb)
-                       a))]
+                       (list bb a)))]
                   [(< (order-qty best-bid) (order-qty a))
                    (let* ([bb0 (orderbook-remove-best-bid orderbook)])
                      (unless (or (false? bb0)  (void? bb0))
@@ -127,8 +131,7 @@
                        (hash-set! bb0 `open #f)
                        (hash-set! orders (order-id a) a)
                        (hash-set! orders (order-id bb0) bb0)
-                       (handle-ask a)
-                       a))]
+                       (append (list bb0) (handle-ask a))))]
                   [else
                    (let* ([bb0 (orderbook-remove-best-bid orderbook)])
                      (unless (or (false? bb0)  (void? bb0))
@@ -148,7 +151,7 @@
                        (orderbook-add-bid! orderbook bb0)
                        (hash-set! orders (order-id a) a)
                        (hash-set! orders (order-id bb0) bb0)
-                       a))]))))
+                       (list a bb0)))]))))
 
     (define/public (cross-bid b [fok-checked? #f])
       (define best-ask (orderbook-get-best-ask orderbook))
@@ -181,7 +184,7 @@
                        (hash-set! ba `qty 0)
                        (hash-set! orders (order-id b) b)
                        (hash-set! orders (order-id ba) ba)
-                       b))]
+                       (list b best-ask)))]
                   [(< (order-qty best-ask) (order-qty b))
                    (let* ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
@@ -201,8 +204,7 @@
                        (hash-set! ba0 `qty 0)
                        (hash-set! orders (order-id b) b)
                        (hash-set! orders (order-id ba0) ba0)
-                       (handle-bid b)
-                       b))]
+                       (append (list ba0) (handle-bid b))))]
                   [else
                    (let ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
@@ -223,7 +225,7 @@
                        (hash-set! orders (order-id b) b)
                        (hash-set! orders (order-id ba0) ba0)
                        (orderbook-add-ask! orderbook ba0)
-                       b))]))))))
+                       (list b ba0)))]))))))
           
 
 (module+ test

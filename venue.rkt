@@ -98,10 +98,12 @@
             (define ask (hash-ref ba `price 0))
             (define bid-size (hash-ref bb `qty 0))
             (define ask-size (hash-ref ba `qty 0))
-            (define bid-ob (heap->vector (orderbook-bids ob)))
-            (define bid-depth (vector-sum (vector-map order-qty bid-ob)))
-            (define ask-ob (heap->vector (orderbook-asks ob)))
-            (define ask-depth (vector-sum (vector-map order-qty ask-ob)))
+            (define bid-depth (if (= 0 bid) 0
+                                  (with-handlers ([exn? (lambda (e) 0)])
+                                    (vector-sum (vector-map order-qty (heap->vector (orderbook-bids ob)))))))
+            (define ask-depth (if (= 0 ask) 0
+                                  (with-handlers ([exn? (lambda (e) 0)])
+                                    (vector-sum (vector-map order-qty (heap->vector (orderbook-asks ob)))))))
             (define last-trade-data (send me get-last-trade))
             (make-hash (list (cons `ok #t) (cons `symbol stock) (cons `venue name) (cons `bid bid) (cons `ask ask)
                              (cons `bidSize bid-size) (cons `askSize ask-size) (cons `quoteTime (current-time->string))
