@@ -140,7 +140,7 @@
                                                                                                    (cons `ts (current-time->string)))))))
                        
                        (hash-set! last-trade-data `last (order-price bb0))
-                       (hash-set! last-trade-data `lastSize (order-qty a))
+                       (hash-set! last-trade-data `lastSize (order-original-qty a))
                        (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! bb0 `qty (- (order-qty bb0) (order-qty a)))
                        (hash-set! a `qty 0)
@@ -215,7 +215,7 @@
                        
 
                        (hash-set! last-trade-data `last (order-price ba0))
-                       (hash-set! last-trade-data `lastSize (order-qty b))
+                       (hash-set! last-trade-data `lastSize (order-original-qty b))
                        (hash-set! last-trade-data `lastTrade (current-time->string))
                        (hash-set! ba0 `qty (- (order-qty ba0) (order-qty b)))
                        (hash-set! b `qty 0)
