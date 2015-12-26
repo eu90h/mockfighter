@@ -51,9 +51,6 @@
             [(equal? "buy" (order-direction o)) (handle-bid o)]
             [(equal? "sell" (order-direction o)) (handle-ask o)]
             [else (error-json (string-append "unknown order direction, try buy or sell"))]))
-
-    (define (vector-sum v)
-      (foldl + 0 (vector->list v)))
     
     (define/public (handle-bid b)
       (hash-set! orders (order-id b) b)

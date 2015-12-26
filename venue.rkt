@@ -82,9 +82,6 @@
           (error-json "symbol not found on exchange")
           (send me get-order-status order-id)))
     
-    (define (vector-sum v)
-      (foldl + 0 (vector->list v)))
-    
     (define/public (get-quote stock)
       (define me (hash-ref stocks stock #f))
       (if (equal? me #f)
@@ -105,7 +102,10 @@
                                   (with-handlers ([exn? (lambda (e) 0)])
                                     (vector-sum (vector-map order-qty (heap->vector (orderbook-asks ob)))))))
             (define last-trade-data (send me get-last-trade))
-            (make-hash (list (cons `ok #t) (cons `symbol stock) (cons `venue name) (cons `bid bid) (cons `ask ask)
+           (define q (make-hash (list (cons `ok #t) (cons `symbol stock) (cons `venue name)
                              (cons `bidSize bid-size) (cons `askSize ask-size) (cons `quoteTime (current-time->string))
                              (cons `bidDepth bid-depth) (cons `askDepth ask-depth) (cons `last (hash-ref last-trade-data `last))
-                             (cons `lastSize (hash-ref last-trade-data `lastSize)) (cons `lastTrade (hash-ref last-trade-data `lastTrade)))))))))
+                             (cons `lastSize (hash-ref last-trade-data `lastSize)) (cons `lastTrade (hash-ref last-trade-data `lastTrade)))))
+            (unless (= 0 bid) (hash-set! q `bid bid))
+            (unless (= 0 ask) (hash-set! q `ask ask))
+            q)))))

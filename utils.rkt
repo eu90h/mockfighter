@@ -1,7 +1,8 @@
 #lang racket
 (provide generate-account-number generate-exchange-name generate-stock-name error-json
-         respond respond/error)
+         respond respond/error vector-sum)
 (require web-server/servlet json math)
+
 (define (respond jsexpr)
   (unless (jsexpr? jsexpr)
     (raise-argument-error `respond "jsexpr?" jsexpr))
@@ -33,8 +34,13 @@
             
                   (lambda (n) (if (= n 1) (vector-ref vowels (random 6))
                                   (vector-ref consonants (random 20))))) "EX"))
+
 (define (generate-stock-name)
   (build-string (random-integer 3 4)
                 (lambda (n) (vector-ref consonants (random 20)))))
+
 (define (error-json msg)
   (make-hash (list (cons `ok #f) (cons `error msg))))
+
+ (define (vector-sum v)
+      (foldl + 0 (vector->list v)))
