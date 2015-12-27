@@ -3,13 +3,6 @@
 (require stockfighter-api "orderbook.rkt" "utils.rkt" racket/generator data/heap
          net/rfc6455 (only-in json jsexpr->string))
 
-(define generate-id
-  (generator
-   ()
-   (let loop ([id 0])
-     (yield id)
-     (loop (+ 1 id)))))
-
 (define matching-engine%
   (class object% (super-new)
     (init-field orderbook)
@@ -29,11 +22,11 @@
             (with-handlers ([exn? (lambda (e) (hash-set! (instance-executions-sockets inst) (order-account e) #f))])
               (ws-send! executions (jsexpr->string e))))))
     
-    (define/public (cancel-order instance id account)
+    (define/public (cancel-order inst id account)
       (define order (hash-ref orders id #f))
       (if (equal? #f order)
           (error-json "order not found")
-          (if (equal? account (order-account order))
+          (if (not (equal? account (order-account order)))
               (error-json "cannot cancel another trader's order")
               (begin (hash-set! order `open #f) (hash-set! orders id order) (orderbook-remove! orderbook id) order))))
 
