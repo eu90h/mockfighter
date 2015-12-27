@@ -1,6 +1,6 @@
 #lang racket
 (require "matching-engine.rkt" "orderbook.rkt" stockfighter-api "utils.rkt"
-         "noise-trader.rkt" "mm.rkt" math data/heap)
+         "noise-trader.rkt" "mm.rkt" math data/heap "retail-trader.rkt")
 (provide venue%)
 
 (define venue%
@@ -18,11 +18,11 @@
                  (hash-set! fmvs name (random-integer 1000 10000)))
           (error-json "invalid stock name")))
     
-    (define/public (cancel-order symbol id)
+    (define/public (cancel-order inst symbol id account)
       (define me (hash-ref stocks symbol #f))
       (if (equal? me #f)
           (error-json "symbol not found on exchange")
-          (send me cancel-order id)))
+          (send me cancel-order inst id account)))
     
     (define/public (get-fmv stock)
       (hash-ref fmvs stock #f))
@@ -41,22 +41,28 @@
         (for ([bot (in-list bots)])
           (send bot trade))))
     
-    (define/public (add-bot type account venue-name symbol)
+    (define/public (add-bot type api-key account venue-name symbol)
+      
       (define bot (cond
-        [(equal? type `mm) (new mm% [api-key (generate-account-number)]
-                                [account account]
-                                [stock symbol]
-                                [venue-name venue-name]
-                               [venue this])]
-        [(equal? type `noise) (new noise-trader% [api-key (generate-account-number)]
-                                [account account]
-                                [stock symbol]
-                                [venue-name venue-name]
-                               [venue this])]))
+                    [(equal? type `retail) (new retail-trader% [api-key api-key]
+                                                [venue-name venue-name]
+                                                [stock symbol]
+                                                [account account]
+                                                [venue this])]
+                    [(equal? type `mm) (new mm% [api-key api-key]
+                                                [venue-name venue-name]
+                                                [stock symbol]
+                                                [account account]
+                                                [venue this])]
+                    [(equal? type `noise) (new noise-trader% [api-key api-key]
+                                                [venue-name venue-name]
+                                                [stock symbol]
+                                                [account account]
+                                                [venue this])]))
       (set! bots (append bots (list bot)))
       bot)
     
-    (define/public (handle-order order)
+    (define/public (handle-order inst order)
       (define symbol (hash-ref order `symbol #f))
       (if (equal? #f symbol)
           (error-json "symbol not found")
@@ -64,7 +70,7 @@
             (if (equal? #f me)
                 (error-json "symbol not found on exchange")
                 (if (integer? (order-price order))
-                    (send me handle-order order)
+                    (send me handle-order inst order)
                     (error-json "price must be an integer"))))))
     
     (define/public (get-orderbook stock)

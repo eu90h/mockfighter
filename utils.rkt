@@ -1,7 +1,9 @@
 #lang racket
 (provide generate-account-number generate-exchange-name generate-stock-name error-json
-         respond respond/error vector-sum)
+         respond respond/error vector-sum (struct-out instance))
 (require web-server/servlet json math)
+
+(define-struct instance (id accounts venue venue-name symbol ticker-sockets executions-sockets) #:mutable)
 
 (define (respond jsexpr)
   (unless (jsexpr? jsexpr)
