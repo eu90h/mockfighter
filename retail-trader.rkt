@@ -3,21 +3,13 @@
 (provide retail-trader%)
 (define retail-trader%
   (class object% (super-new)
-    (init-field api-key account venue-name stock venue)
+    (init-field api-key venue stock account venue-name)
     (field [sf (new stockfighter% [key api-key])])
     (send sf set-ob-endpoint "127.0.0.1")
     (send sf set-gm-endpoint "127.0.0.1")
     (send sf set-port 8000)
     (send sf ssl-off)
-   
-    (define/public (set-api-key key)
-      (set! api-key key)
-      (set! sf (new stockfighter% [key api-key]))
-      (send sf set-ob-endpoint "127.0.0.1")
-      (send sf set-gm-endpoint "127.0.0.1")
-      (send sf set-port 8000)
-      (send sf ssl-off))
-    
+
     (define/public (trade)
       (send sf post-order account venue-name stock 0 (if (= 1 (random-integer 1 20))
                                                          (random-integer 20 100)

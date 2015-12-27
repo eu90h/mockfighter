@@ -6,21 +6,13 @@
   (sample noise-dist))
 (define mm%
   (class object% (super-new)
-    (init-field api-key account venue-name stock venue)
+    (init-field api-key venue stock account venue-name)
     (field [sf (new stockfighter% [key api-key])]
            [cur-order null])
     (send sf set-ob-endpoint "127.0.0.1")
     (send sf set-gm-endpoint "127.0.0.1")
     (send sf set-port 8000)
     (send sf ssl-off)
-
-    (define/public (set-api-key key)
-      (set! api-key key)
-      (set! sf (new stockfighter% [key api-key]))
-      (send sf set-ob-endpoint "127.0.0.1")
-      (send sf set-gm-endpoint "127.0.0.1")
-      (send sf set-port 8000)
-      (send sf ssl-off))
     
     (define/public (trade)
       (define fmv (inexact->exact (truncate (+ (send venue get-fmv stock) (gaussian-noise)))))
