@@ -12,7 +12,8 @@
   (class object% (super-new)
     (field [inst #f]
            [stop-sockets null]
-           [accounts (make-hash)])
+           [accounts (make-hash)]
+           [initialized? #f])
     
     (define (open-websockets)  
       (define (open-ticker-socket c account)
@@ -67,9 +68,9 @@
       
       (open-websockets)
       (add-bots venue venue-name symbol))
-    (init)
    
     (define/public (new-instance api-key)
+      (when (false? initialized?) (init) (set! initialized? #t))
       (define venue-name (instance-venue-name inst))
       (define account (generate-account-number))
       (add-account! api-key account)
