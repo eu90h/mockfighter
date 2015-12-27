@@ -1,13 +1,7 @@
 #lang racket
 (require "utils.rkt" "matching-engine.rkt" "venue.rkt"
-         json net/rfc6455 stockfighter-api (only-in racket/generator generator yield))
+         json net/rfc6455 stockfighter-api)
 (provide game-master%)
-(define generate-id
-  (generator
-   ()
-   (let loop ([id 0])
-     (yield id)
-     (loop (+ 1 id)))))
 (define game-master%
   (class object% (super-new)
     (field [inst #f]
@@ -50,7 +44,6 @@
       (for ([i (in-range 0 30)])
         (send venue add-bot `noise api-key account venue-name symbol))
       (thread (thunk
-               (sleep 2)
                (let loop ([trading-day-alarm (alarm-evt (+ (current-milliseconds) 5000))])
                  (if (equal? #f (sync/timeout 0 trading-day-alarm))
                      (begin (run-bots)
@@ -61,7 +54,7 @@
     (define (init)
       (define venue-name (generate-exchange-name))
       (define venue (new venue% [name venue-name]))
-      (define id (generate-id))
+      (define id 0)
       (define symbol (generate-stock-name))
       (send venue add-stock symbol)
       (set! inst (make-instance id null venue venue-name symbol (make-hash) (make-hash)))
@@ -137,51 +130,25 @@
             (if (equal? (send (instance-venue inst) get-name) venue)
                 (send (instance-venue inst) get-orderbook stock)
                 (error-json "venue not found"))))
-    
-    (define (send-quote ticker account inst q)
-      (unless (false? ticker)
-        (if (ws-conn-closed? ticker)
-            (hash-set! (instance-ticker-sockets inst) account #f)
-            (with-handlers ([exn? (lambda (e) (hash-set! (instance-ticker-sockets inst) account #f))])
-              (ws-send! ticker (jsexpr->string q))))))
-    
-    
-    
+   
     (define/public (cancel-order api-key venue stock order-id)
         (if (equal? #f inst)
             (error-json "instance not running")
             (if (equal? (instance-venue-name inst) venue)
                 (if (false? (api-key->account api-key))
                     (error-json "account not registered on this venue")
-                    (let ([response (send (instance-venue inst) cancel-order inst stock order-id (api-key->account api-key))])
-                      (when (and (hash? response) (ok? response))
-                      (for ([(key accnt) (in-hash accounts)])
-                        (when (hash-has-key? (instance-ticker-sockets inst) accnt)
-                        (define ticker (hash-ref (instance-ticker-sockets inst) accnt #f))
-                        (unless (or (equal? #f ticker) (not (ok? response)))
-                          (send-quote ticker accnt inst (make-hash (list (cons `ok #t)
-                                                                         (cons `quote (send (instance-venue inst) get-quote (instance-symbol inst))))))))))
-                      response))
+                    (send (instance-venue inst) cancel-order inst accounts stock order-id (api-key->account api-key)))
                 (error-json "venue not found"))))
     
     (define/public (handle-order api-key venue stock order)
       (define account (hash-ref order `account #f))
       (cond [(equal? #f account) (error-json "order missing account number")]
-            [else 
-                    (if (equal? #f inst)
-                        (error-json "instance not running")
-                        (let ([venue-name (hash-ref order `venue #f)])
-                          (if (or (equal? #f venue-name) (not (equal? (instance-venue-name inst) venue-name)))
-                              (error-json "venue not found")
-                              (if (false? (api-key->account api-key))
-                                  (error-json "account not registered on this venue")
-                                  (let ([response (send (instance-venue inst) handle-order inst order)])
-                                    (when (and (hash? response) (ok? response))
-                                    (for ([(key accnt) (in-hash accounts)])
-                                      (when (hash-has-key? (instance-ticker-sockets inst) accnt)
-                                      (define ticker (hash-ref (instance-ticker-sockets inst) accnt #f))
-                                      (unless (or (equal? #f ticker) (not (ok? response)))
-                                        (send-quote ticker accnt inst (make-hash (list (cons `ok #t)
-                                                                                       (cons `quote (send (instance-venue inst) get-quote (instance-symbol inst))))))))))
-                                 
-                                        (if (hash? response) response order))))))]))))
+            [else (if (equal? #f inst)
+                      (error-json "instance not running")
+                      (let ([venue-name (hash-ref order `venue #f)])
+                        (if (or (equal? #f venue-name) (not (equal? (instance-venue-name inst) venue-name)))
+                            (error-json "venue not found")
+                            (if (false? (api-key->account api-key))
+                                (error-json "account not registered on this venue")
+                                (let ([response (send (instance-venue inst) handle-order inst accounts order)])
+                                  (if (hash? response) response order))))))]))))

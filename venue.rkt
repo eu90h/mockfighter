@@ -18,11 +18,11 @@
                  (hash-set! fmvs name (random-integer 1000 10000)))
           (error-json "invalid stock name")))
     
-    (define/public (cancel-order inst symbol id account)
+    (define/public (cancel-order inst accounts symbol id account)
       (define me (hash-ref stocks symbol #f))
       (if (equal? me #f)
           (error-json "symbol not found on exchange")
-          (send me cancel-order inst id account)))
+          (send me cancel-order inst accounts id account)))
     
     (define/public (get-fmv stock)
       (hash-ref fmvs stock #f))
@@ -42,7 +42,6 @@
           (send bot trade))))
     
     (define/public (add-bot type api-key account venue-name symbol)
-      
       (define bot (cond
                     [(equal? type `retail) (new retail-trader% [api-key api-key]
                                                 [venue-name venue-name]
@@ -62,7 +61,7 @@
       (set! bots (append bots (list bot)))
       bot)
     
-    (define/public (handle-order inst order)
+    (define/public (handle-order inst accounts order)
       (define symbol (hash-ref order `symbol #f))
       (if (equal? #f symbol)
           (error-json "symbol not found")
@@ -70,7 +69,7 @@
             (if (equal? #f me)
                 (error-json "symbol not found on exchange")
                 (if (integer? (order-price order))
-                    (send me handle-order inst order)
+                    (send me handle-order inst accounts order)
                     (error-json "price must be an integer"))))))
     
     (define/public (get-orderbook stock)
