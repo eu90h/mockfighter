@@ -89,28 +89,28 @@
             [(equal? "sell" (order-direction o)) (handle-ask inst accounts o)]
             [else (error-json (string-append "unknown order direction, try buy or sell"))]))
     
-    (define/public (handle-bid inst accounts b)
+    (define/public (handle-bid inst accounts b [fok-checked? #f])
       (hash-set! orders (order-id b) b)
       (cond [(= 0 (heap-count (orderbook-asks orderbook)))
              (cond [(equal? "limit" (order-type b))
                     (orderbook-add-bid! orderbook b) b]
                    [else (hash-set! b `open #f) b])]
-            [(equal? "market" (order-type b)) (cross-bid b inst accounts)]
+            [(equal? "market" (order-type b)) (cross-bid b inst accounts fok-checked?)]
             [(and (not (equal? "market" (order-type b))) (<= (order-price (orderbook-get-best-ask orderbook)) (order-price b)))
-             (cross-bid b inst accounts)]
+             (cross-bid b inst accounts fok-checked?)]
             [(equal? "limit" (order-type b)) (orderbook-add-bid! orderbook b) b]
             [else (hash-set! b `open #f)
                   b]))
     
-    (define/public (handle-ask inst accounts a)
+    (define/public (handle-ask inst accounts a [fok-checked? #f])
       (hash-set! orders (order-id a) a)
       (cond [(= 0 (heap-count (orderbook-bids orderbook)))
              (cond [(equal? "limit" (order-type a))
                     (orderbook-add-ask! orderbook a) a]
                    [else (hash-set! a `open #f) a])]
-            [(equal? "market" (order-type a)) (cross-bid a inst accounts)]
+            [(equal? "market" (order-type a)) (cross-ask a inst accounts fok-checked?)]
             [(and (not (equal? "market" (order-type a))) (<= (order-price a) (order-price (orderbook-get-best-bid orderbook))))
-             (cross-ask a inst accounts)]
+             (cross-ask a inst accounts fok-checked?)]
             [(equal? "limit" (order-type a)) (orderbook-add-ask! orderbook a) a]
             [else (hash-set! a `open #f)
                   a]))
@@ -124,8 +124,8 @@
                 (when (>= (order-price bid) (order-price a))
                   (set! qty (+ qty (order-qty bid)))))
               (if (>= qty (order-original-qty a))
-                  (cross-ask a #t)
-                  (begin  (hash-set! a `fills null)
+                  (cross-ask a inst accounts #t)
+                  (begin (hash-set! a `fills null)
                     (hash-set! a `qty (hash-ref a `originalQty))
                     a)))
             (cond [(= (order-qty best-bid) (order-qty a))
@@ -169,7 +169,7 @@
                        (hash-set! orders (order-id bb0) bb0)
                        (send-execution inst a bb0)
                        (send-quote inst accounts)
-                       (handle-ask inst accounts a)))]
+                       (handle-ask inst accounts a fok-checked?)))]
                   [else
                    (let* ([bb0 (orderbook-remove-best-bid orderbook)])
                      (unless (or (false? bb0)  (void? bb0))
@@ -202,7 +202,7 @@
                 (when (<= (order-price ask) (order-price b))
                   (set! qty (+ qty (order-qty ask)))))
               (if (>= qty (order-original-qty b))
-                  (cross-bid b #t)
+                  (cross-bid b inst accounts #t)
                   (begin (hash-set! b `fills null)
                          (hash-set! b `qty (hash-ref b `originalQty))
                          b)))
@@ -250,7 +250,7 @@
                        (hash-set! orders (order-id ba0) ba0)
                        (send-execution inst b ba0)
                        (send-quote inst accounts)
-                       (handle-bid inst accounts b)))]
+                       (handle-bid inst accounts b fok-checked?)))]
                   [else
                    (let ([ba0 (orderbook-remove-best-ask orderbook)])
                      (unless (or (false? ba0)  (void? ba0))
