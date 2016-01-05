@@ -48,7 +48,7 @@ Next, create an instance of a level by POSTing to `http://localhost:8000/gm/leve
 
 This will create an instance of the level "any-string-here".
 
-The bots will begin trading two seconds after an instance is created. You can disable the bots like so: `(define server-thread (run-mockfighter #:bots #f))`.
+The bots will begin trading two seconds after an instance is created. You can disable the bots like so: `(run-mockfighter #:bots #f)`.
 
 Running the server on a port other than 8000 requires settings the port option: `(run-mockfighter #:port port-number)`
 
