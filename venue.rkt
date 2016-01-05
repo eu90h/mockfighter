@@ -62,7 +62,7 @@
       bot)
     
     (define/public (handle-order inst accounts order)
-      (define symbol (hash-ref order `symbol #f))
+      (define symbol (hash-ref order `symbol (hash-ref order `stock #f)))
       (if (equal? #f symbol)
           (error-json "symbol not found")
           (let ([me (hash-ref stocks symbol #f)])
