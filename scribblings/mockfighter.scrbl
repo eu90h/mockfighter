@@ -24,7 +24,11 @@ Next, create an instance by making a POST request to http://localhost:8000/gm/le
 
 This creates an instance of the level called any-string-here.
 
-The bots will begin trading two seconds after creating an instance.
+The bots will begin trading two seconds after creating an instance. The bots may be disabled like so:
+@racketblock[(run-mockfighter #:bots #f)]
+
+Furthermore, you may run the server on a port other than 8000 by setting the port option:
+@racketblock[(run-mockfighter #:port port-number)]
 
 Mockfighter requires (like Stockfighter) api keys, which are set in request headers. Any string will do here.
 

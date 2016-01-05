@@ -73,16 +73,15 @@
   
 (define mockfighter-server%
   (class object% (super-new)
-    (init-field prefix port)
+    (init-field prefix port bots?)
     (define/public (serve)
+      (send gm set-bots bots?)
       (serve/servlet mockfighter-api
                      #:port port
                      #:servlet-regexp #rx""
                      #:servlet-path prefix
                      #:command-line? #t))))
 
-(define (run-mockfighter [port 8000])
-  (define server (new mockfighter-server% [prefix "/"] [port port]))
-  (define server-thread (thread (thunk (send server serve))))
-  
-  server-thread)
+(define (run-mockfighter #:port [port 8000] #:bots [bots? #t])
+  (define server (new mockfighter-server% [prefix "/"] [port port] [bots? bots?]))
+  (thread (thunk (send server serve))))

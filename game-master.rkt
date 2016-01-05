@@ -7,7 +7,10 @@
     (field [inst #f]
            [stop-sockets null]
            [accounts (make-hash)]
-           [initialized? #f])
+           [initialized? #f]
+           [bots? #t])
+    
+    (define/public (set-bots b) (set! bots? b))
     
     (define (open-websockets)  
       (define (open-ticker-socket c account)
@@ -26,13 +29,14 @@
               [(and (= (length parts) 7) (equal? "executions" (seventh parts))) (open-executions-socket c (fourth parts))]
               [(and (= (length parts) 9) (equal? "tickertape" (seventh parts))) (open-ticker-socket c (fourth parts))]
               [(and (= (length parts) 9) (equal? "executions" (seventh parts))) (open-executions-socket c (fourth parts))]))
+      (ws-idle-timeout 1800)
       (ws-serve #:port 8001
                 websocket-handler))
     
      (define (add-account! api-key a)
       (hash-set! accounts api-key a)
       (set-instance-accounts! inst (append (instance-accounts inst) (list a))))
-    
+
     (define (add-bots venue venue-name symbol)
       (define api-key (generate-account-number))
       (define account (generate-account-number))
@@ -60,7 +64,8 @@
       (set! inst (make-instance id null venue venue-name symbol (make-hash) (make-hash)))
       
       (open-websockets)
-      (add-bots venue venue-name symbol))
+      (when bots?
+        (add-bots venue venue-name symbol)))
    
     (define/public (new-instance api-key)
       (when (false? initialized?) (init) (set! initialized? #t))
