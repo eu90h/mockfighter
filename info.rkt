@@ -1,6 +1,10 @@
 #lang info
 (define collection "mockfighter")
-(define deps '("base"
+(define deps '("data-lib"
+               "math-lib"
+               "rfc6455"
+               "web-server-lib"
+               "base"
                "rackunit-lib"
                "stockfighter-racket"))
 (define build-deps '("scribble-lib" "racket-doc"))
